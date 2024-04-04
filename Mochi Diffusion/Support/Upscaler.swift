@@ -9,6 +9,8 @@ import CoreImage
 import Vision
 
 final class Upscaler {
+    
+    static let SCALE: Int = 2 // was 4
 
     static let shared = Upscaler()
 
@@ -35,7 +37,7 @@ final class Upscaler {
         /// output image's ratio will be fixed later
     }
 
-    func upscale(cgImage: CGImage) async -> CGImage? {
+    func upscale(cgImage: CGImage, scale: Int) async -> CGImage? {
         let handler = VNImageRequestHandler(cgImage: cgImage)
         let requests: [VNRequest] = [request]
 
@@ -43,8 +45,8 @@ final class Upscaler {
         guard let observation = self.request.results?.first as? VNPixelBufferObservation else {
             return nil
         }
-        let upscaledWidth = cgImage.width * 4
-        let upscaledHeight = cgImage.height * 4
+        let upscaledWidth = cgImage.width * scale
+        let upscaledHeight = cgImage.height * scale
         guard
             let pixelBuffer = resizePixelBuffer(
                 observation.pixelBuffer,
@@ -58,7 +60,7 @@ final class Upscaler {
     func upscale(sdi: SDImage) async -> SDImage? {
         if !sdi.upscaler.isEmpty { return nil }
         guard let cgImage = sdi.image else { return nil }
-        guard let upscaledImage = await upscale(cgImage: cgImage) else { return nil }
+        guard let upscaledImage = await upscale(cgImage: cgImage, scale: Upscaler.SCALE) else { return nil }
         var upscaledSDI = sdi
         upscaledSDI.image = upscaledImage
         upscaledSDI.aspectRatio = CGFloat(Double(sdi.width) / Double(sdi.height))
