@@ -31,6 +31,9 @@ struct SDImage: Identifiable, Hashable {
     var isUpscaling = false
     var path = ""
     var finderTagColorNumber = 0
+    var showReticle = true
+    var reticleOffset: CGSize = CGSize(width: 0, height: 0)
+    var reticleScale: CGFloat = 0.5
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)

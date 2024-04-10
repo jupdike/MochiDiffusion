@@ -56,115 +56,174 @@ struct InfoGridRow: View {
     }
 }
 
+func getCompositeReticleView(scale: CGFloat, offset: CGSize) -> some View {
+    return GeometryReader { geometry in
+        FaceReticle()
+            .scale(scale * 6.0 / 5.0) // reticle square is inset
+            .offset(x: geometry.size.width * offset.width, y: geometry.size.height * offset.height)
+    }
+}
+
+// had to split this up to get compiler to stop whining about unsound type system
+func tapToPlaceReticle(store: ImageStore, sdi: SDImage, img: CGImage, location: CGPoint, frame geom: CGRect) {
+    let ratX: CGFloat = (location.x - geom.minX) / CGFloat((geom.maxX - geom.minX)) - 0.5
+    let ratY: CGFloat = (location.y - geom.minY) / CGFloat((geom.maxY - geom.minY)) - 0.5
+    store.updateMetadata(sdi, reticleScale: sdi.reticleScale, reticleOffset: CGSize(width: ratX, height: ratY))
+}
+
 struct InspectorView: View {
     @Environment(ImageStore.self) private var store: ImageStore
+    
+    @State var lastScaleValue: CGFloat = 1.0
+    @State private var isChecked = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            if let sdi = store.selected(), let img = sdi.image {
-                Image(img, scale: 1, label: Text(verbatim: String(sdi.prompt)))
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .padding(4)
-                    .shadow(color: sdi.image?.averageColor ?? .black, radius: 16)
-                    .padding()
-
-                ScrollView(.vertical) {
-                    Grid(alignment: .leading, horizontalSpacing: 4) {
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.date.rawValue),
-                            text: sdi.generatedDate.formatted(date: .long, time: .standard),
-                            showCopyToPromptOption: false
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.model.rawValue),
-                            text: sdi.model,
-                            showCopyToPromptOption: false
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.size.rawValue),
-                            text:
-                                "\(sdi.width) x \(sdi.height)\(!sdi.upscaler.isEmpty ? " (Upscaled using \(sdi.upscaler))" : "")",
-                            showCopyToPromptOption: false
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.includeInImage.rawValue),
-                            text: sdi.prompt,
-                            showCopyToPromptOption: true,
-                            callback: ImageController.shared.copyPromptToPrompt
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.excludeFromImage.rawValue),
-                            text: sdi.negativePrompt,
-                            showCopyToPromptOption: true,
-                            callback: ImageController.shared.copyNegativePromptToPrompt
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.seed.rawValue),
-                            text: String(sdi.seed),
-                            showCopyToPromptOption: true,
-                            callback: ImageController.shared.copySeedToPrompt
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.steps.rawValue),
-                            text: String(sdi.steps),
-                            showCopyToPromptOption: true,
-                            callback: ImageController.shared.copyStepsToPrompt
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.guidanceScale.rawValue),
-                            text: String(sdi.guidanceScale),
-                            showCopyToPromptOption: true,
-                            callback: ImageController.shared.copyGuidanceScaleToPrompt
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.scheduler.rawValue),
-                            text: sdi.scheduler.rawValue,
-                            showCopyToPromptOption: true,
-                            callback: ImageController.shared.copySchedulerToPrompt
-                        )
-                        InfoGridRow(
-                            type: LocalizedStringKey(Metadata.mlComputeUnit.rawValue),
-                            text: MLComputeUnits.toString(sdi.mlComputeUnit),
-                            showCopyToPromptOption: false
-                        )
+        return GeometryReader { proxy in
+            //print("\(geometry.size)")
+            VStack(spacing: 0) {
+                if let sdi = store.selected(), let img = sdi.image {
+                    ZStack {
+                        Image(img, scale: 1, label: Text(verbatim: String(sdi.prompt)))
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .padding(4)
+                            .shadow(color: sdi.image?.averageColor ?? .black, radius: 16)
+                            .padding(4)
+                        if (sdi.showReticle) {
+                            getCompositeReticleView(scale: sdi.reticleScale, offset: sdi.reticleOffset)
+                                .foregroundColor(.white)
+                                .aspectRatio(contentMode: .fit)
+                                .padding(8)
+                                .shadow(color: .black, radius: 1)
+                                .shadow(color: .black, radius: 1)
+                                .shadow(color: .black, radius: 1)
+                        }
                     }
+                    .frame(width: proxy.size.width, height: proxy.size.width) // not a bug, yes set the height to the width
+                    .onTapGesture(count: 1, coordinateSpace: .local) { location in
+                        let frame = proxy.frame(in: .local)
+                        tapToPlaceReticle(store: store, sdi: sdi, img: img, location: location, frame: CGRect(origin: CGPoint(x: 8, y: 8), size: CGSize(width: frame.width - 16, height: frame.width - 16))) // also not a bug, this is deliberate because the geometry read gets the full height and we want the aspect height TODO deal with non-square images
+                    }
+                    .gesture(
+                        MagnificationGesture()
+                            .onChanged { val in
+                                let delta = val / self.lastScaleValue
+                                self.lastScaleValue = val
+                                let newScale = sdi.reticleScale * delta
+                                print("zoom = \(1.0/newScale)")
+                                store.updateMetadata(sdi, reticleScale: newScale, reticleOffset: sdi.reticleOffset)
+                            }
+                            .onEnded { val in
+                                self.lastScaleValue = 1.0
+                            }
+                        )
+                    
+                    ScrollView(.vertical) {
+                        Grid(alignment: .leading, horizontalSpacing: 4) {
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.date.rawValue),
+                                text: sdi.generatedDate.formatted(date: .long, time: .standard),
+                                showCopyToPromptOption: false
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.model.rawValue),
+                                text: sdi.model,
+                                showCopyToPromptOption: false
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.size.rawValue),
+                                text:
+                                    "\(sdi.width) x \(sdi.height)\(!sdi.upscaler.isEmpty ? " (Upscaled using \(sdi.upscaler))" : "")",
+                                showCopyToPromptOption: false
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.includeInImage.rawValue),
+                                text: sdi.prompt,
+                                showCopyToPromptOption: true,
+                                callback: ImageController.shared.copyPromptToPrompt
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.excludeFromImage.rawValue),
+                                text: sdi.negativePrompt,
+                                showCopyToPromptOption: true,
+                                callback: ImageController.shared.copyNegativePromptToPrompt
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.seed.rawValue),
+                                text: String(sdi.seed),
+                                showCopyToPromptOption: true,
+                                callback: ImageController.shared.copySeedToPrompt
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.steps.rawValue),
+                                text: String(sdi.steps),
+                                showCopyToPromptOption: true,
+                                callback: ImageController.shared.copyStepsToPrompt
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.guidanceScale.rawValue),
+                                text: String(sdi.guidanceScale),
+                                showCopyToPromptOption: true,
+                                callback: ImageController.shared.copyGuidanceScaleToPrompt
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.scheduler.rawValue),
+                                text: sdi.scheduler.rawValue,
+                                showCopyToPromptOption: true,
+                                callback: ImageController.shared.copySchedulerToPrompt
+                            )
+                            InfoGridRow(
+                                type: LocalizedStringKey(Metadata.mlComputeUnit.rawValue),
+                                text: MLComputeUnits.toString(sdi.mlComputeUnit),
+                                showCopyToPromptOption: false
+                            )
+                        }
+                    }
+                    .padding([.horizontal])
+                    
+                    Divider()
+                    
+                    VStack {
+                        if let sdi = store.selected(), let img = sdi.image {
+                            Toggle(isOn: $isChecked) {
+                                Text("Show reticle")
+                            }
+                                .toggleStyle(.checkbox)
+                                .padding(EdgeInsets(top: 4, leading: 2, bottom: 0, trailing: 2))
+                        }
+                        HStack {
+                            Button {
+                                ImageController.shared.copyToPrompt()
+                            } label: {
+                                Text(
+                                    "Copy Options to Sidebar",
+                                    comment:
+                                        "Button to copy the currently selected image's generation options to the prompt input sidebar"
+                                )
+                            }
+                            Button {
+                                let info = sdi.getHumanReadableInfo()
+                                let pasteboard = NSPasteboard.general
+                                pasteboard.declareTypes([.string], owner: nil)
+                                pasteboard.setString(info, forType: .string)
+                            } label: {
+                                Text(
+                                    "Copy Info",
+                                    comment:
+                                        "Button to copy the currently selected image's generation options to the clipboard"
+                                )
+                            }
+                        }
+                        .padding(EdgeInsets(top: 2, leading: 2, bottom: 6, trailing: 2))
+                    }
+                } else {
+                    Text(
+                        "No Info",
+                        comment: "Placeholder text for image inspector"
+                    )
+                    .font(.title2)
+                    .foregroundColor(.secondary)
                 }
-                .padding([.horizontal])
-
-                Divider()
-
-                HStack {
-                    Button {
-                        ImageController.shared.copyToPrompt()
-                    } label: {
-                        Text(
-                            "Copy Options to Sidebar",
-                            comment:
-                                "Button to copy the currently selected image's generation options to the prompt input sidebar"
-                        )
-                    }
-                    Button {
-                        let info = sdi.getHumanReadableInfo()
-                        let pasteboard = NSPasteboard.general
-                        pasteboard.declareTypes([.string], owner: nil)
-                        pasteboard.setString(info, forType: .string)
-                    } label: {
-                        Text(
-                            "Copy Info",
-                            comment:
-                                "Button to copy the currently selected image's generation options to the clipboard"
-                        )
-                    }
-                }
-                .padding()
-            } else {
-                Text(
-                    "No Info",
-                    comment: "Placeholder text for image inspector"
-                )
-                .font(.title2)
-                .foregroundColor(.secondary)
             }
         }
     }
