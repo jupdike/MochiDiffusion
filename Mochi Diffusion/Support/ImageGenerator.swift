@@ -266,7 +266,10 @@ struct GenerationConfig: Sendable, Identifiable {
             for image in images {
                 guard let image = image else { continue }
                 if config.upscaleGeneratedImages {
-                    guard let upscaledImg = await Upscaler.shared.upscale(cgImage: image, scale: Upscaler.SCALE) else {
+                    guard
+                        let upscaledImg = await Upscaler.shared.upscale(
+                            cgImage: image, scale: Upscaler.scaleHardCoded)
+                    else {
                         continue
                     }
                     sdi.image = upscaledImg

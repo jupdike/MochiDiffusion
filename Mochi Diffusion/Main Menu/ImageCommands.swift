@@ -69,7 +69,7 @@ struct ImageCommands: Commands {
                 }
                 .keyboardShortcut("2", modifiers: .command)
                 .disabled(store.selected() == nil)
-                
+
                 Button {
                     Task { await ImageController.shared.upscaleCurrentImage() }
                 } label: {

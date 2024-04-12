@@ -121,7 +121,7 @@ enum ImagesSortType: String {
         allImages[index] = sdi
         allImages[index].finderTagColorNumber = colorNumber
     }
-    
+
     func updateMetadata(_ sdi: SDImage, reticleScale: CGFloat, reticleOffset: CGSize) {
         guard let index = index(for: sdi.id) else { return }
         allImages[index] = sdi
