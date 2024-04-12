@@ -59,23 +59,47 @@ struct InfoGridRow: View {
 func getCompositeReticleView(scale: CGFloat, offset: CGSize) -> some View {
     return GeometryReader { geometry in
         FaceReticle()
-            .scale(scale * 6.0 / 5.0) // reticle square is inset
+            .scale(scale * 6.0 / 5.0)  // reticle square is inset
             .offset(x: geometry.size.width * offset.width, y: geometry.size.height * offset.height)
     }
 }
 
 // had to split this up to get compiler to stop whining about unsound type system
-func tapToPlaceReticle(store: ImageStore, sdi: SDImage, img: CGImage, location: CGPoint, frame geom: CGRect) {
+func tapToPlaceReticle(
+    store: ImageStore, sdi: SDImage,
+    img: CGImage, location: CGPoint, frame geom: CGRect
+) {
     let ratX: CGFloat = (location.x - geom.minX) / CGFloat((geom.maxX - geom.minX)) - 0.5
     let ratY: CGFloat = (location.y - geom.minY) / CGFloat((geom.maxY - geom.minY)) - 0.5
-    store.updateMetadata(sdi, reticleScale: sdi.reticleScale, reticleOffset: CGSize(width: ratX, height: ratY))
+    store.updateMetadata(
+        sdi, reticleScale: sdi.reticleScale,
+        reticleOffset: CGSize(width: ratX, height: ratY)
+    )
 }
+
+struct MyGuy {
+    let sdi: SDImage
+    let store: ImageStore
+    init(store: ImageStore, sdi: SDImage) {
+        self.store = store
+        self.sdi = sdi
+    }
+}
+
+//@Observable
+//class Obool {
+//    var myBool: Bool = false
+//    init(_ bool: Bool) {
+//        self.myBool = bool
+//    }
+//}
 
 struct InspectorView: View {
     @Environment(ImageStore.self) private var store: ImageStore
-    
+
     @State var lastScaleValue: CGFloat = 1.0
     @State private var isChecked = false
+    //@Bindable var checked: Obool = Obool(false)
 
     var body: some View {
         return GeometryReader { proxy in
@@ -89,20 +113,34 @@ struct InspectorView: View {
                             .padding(4)
                             .shadow(color: sdi.image?.averageColor ?? .black, radius: 16)
                             .padding(4)
-                        if (sdi.showReticle) {
-                            getCompositeReticleView(scale: sdi.reticleScale, offset: sdi.reticleOffset)
-                                .foregroundColor(.white)
-                                .aspectRatio(contentMode: .fit)
-                                .padding(8)
-                                .shadow(color: .black, radius: 1)
-                                .shadow(color: .black, radius: 1)
-                                .shadow(color: .black, radius: 1)
+                        if sdi.showReticle {
+                            getCompositeReticleView(
+                                scale: sdi.reticleScale,
+                                offset: sdi.reticleOffset
+                            )
+                            .foregroundColor(.white)
+                            .aspectRatio(contentMode: .fit)
+                            .padding(8)
+                            .shadow(color: .black, radius: 1)
+                            .shadow(color: .black, radius: 1)
+                            .shadow(color: .black, radius: 1)
                         }
                     }
-                    .frame(width: proxy.size.width, height: proxy.size.width) // not a bug, yes set the height to the width
+                    .frame(width: proxy.size.width, height: proxy.size.width)
+                    // ^^^ not a bug, yes set the height to the width
+                    // also not a bug, this is deliberate
+                    // because the geometry read gets the
+                    // full height and we want the aspect height
+                    // TODO deal with non-square images
                     .onTapGesture(count: 1, coordinateSpace: .local) { location in
                         let frame = proxy.frame(in: .local)
-                        tapToPlaceReticle(store: store, sdi: sdi, img: img, location: location, frame: CGRect(origin: CGPoint(x: 8, y: 8), size: CGSize(width: frame.width - 16, height: frame.width - 16))) // also not a bug, this is deliberate because the geometry read gets the full height and we want the aspect height TODO deal with non-square images
+                        tapToPlaceReticle(
+                            store: store, sdi: sdi, img: img, location: location,
+                            frame: CGRect(
+                                origin: CGPoint(x: 8, y: 8),
+                                size: CGSize(width: frame.width - 16, height: frame.width - 16)
+                            )
+                        )
                     }
                     .gesture(
                         MagnificationGesture()
@@ -111,13 +149,14 @@ struct InspectorView: View {
                                 self.lastScaleValue = val
                                 let newScale = sdi.reticleScale * delta
                                 print("zoom = \(1.0/newScale)")
-                                store.updateMetadata(sdi, reticleScale: newScale, reticleOffset: sdi.reticleOffset)
+                                store.updateMetadata(
+                                    sdi, reticleScale: newScale, reticleOffset: sdi.reticleOffset
+                                )
                             }
                             .onEnded { val in
                                 self.lastScaleValue = 1.0
                             }
-                        )
-                    
+                    )
                     ScrollView(.vertical) {
                         Grid(alignment: .leading, horizontalSpacing: 4) {
                             InfoGridRow(
@@ -180,16 +219,16 @@ struct InspectorView: View {
                         }
                     }
                     .padding([.horizontal])
-                    
+
                     Divider()
-                    
+
                     VStack {
-                        if let sdi = store.selected(), let img = sdi.image {
+                        if let sdi = store.selected() {
                             Toggle(isOn: $isChecked) {
                                 Text("Show reticle")
                             }
-                                .toggleStyle(.checkbox)
-                                .padding(EdgeInsets(top: 4, leading: 2, bottom: 0, trailing: 2))
+                            .toggleStyle(.checkbox)
+                            .padding(EdgeInsets(top: 4, leading: 2, bottom: 0, trailing: 2))
                         }
                         HStack {
                             Button {
