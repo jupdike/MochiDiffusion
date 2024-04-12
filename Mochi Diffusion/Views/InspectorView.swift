@@ -77,15 +77,6 @@ func tapToPlaceReticle(
     )
 }
 
-struct MyGuy {
-    let sdi: SDImage
-    let store: ImageStore
-    init(store: ImageStore, sdi: SDImage) {
-        self.store = store
-        self.sdi = sdi
-    }
-}
-
 struct InspectorView: View {
     @Environment(ImageStore.self) private var store: ImageStore
 
