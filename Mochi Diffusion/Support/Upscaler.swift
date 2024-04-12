@@ -9,8 +9,7 @@ import CoreImage
 import Vision
 
 final class Upscaler {
-    
-    static let SCALE: Int = 2 // was 4
+    static let scaleHardCoded: Int = 2  // was 4
 
     static let shared = Upscaler()
 
@@ -60,7 +59,10 @@ final class Upscaler {
     func upscale(sdi: SDImage) async -> SDImage? {
         if !sdi.upscaler.isEmpty { return nil }
         guard let cgImage = sdi.image else { return nil }
-        guard let upscaledImage = await upscale(cgImage: cgImage, scale: Upscaler.SCALE) else { return nil }
+        guard let upscaledImage = await upscale(cgImage: cgImage, scale: Upscaler.scaleHardCoded)
+        else {
+            return nil
+        }
         var upscaledSDI = sdi
         upscaledSDI.image = upscaledImage
         upscaledSDI.aspectRatio = CGFloat(Double(sdi.width) / Double(sdi.height))
