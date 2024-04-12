@@ -129,6 +129,12 @@ enum ImagesSortType: String {
         allImages[index].reticleOffset = reticleOffset
     }
 
+    func updateMetadata(_ sdi: SDImage, showReticle: Bool) {
+        guard let index = index(for: sdi.id) else { return }
+        allImages[index] = sdi
+        allImages[index].showReticle = showReticle
+    }
+
     func update(_ sdi: SDImage) {
         guard let index = index(for: sdi.id) else { return }
         allImages[index] = sdi

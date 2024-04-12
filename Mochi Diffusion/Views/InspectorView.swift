@@ -127,12 +127,15 @@ struct InspectorView: View {
                         }
                     }
                     .frame(width: proxy.size.width, height: proxy.size.width)
-                    // ^^^ not a bug, yes set the height to the width
-                    // also not a bug, this is deliberate
+                    // ^^^ Not a bug, yes set the height to the width
+                    // vvv Also two widths -- not a bug, this is deliberate
                     // because the geometry read gets the
                     // full height and we want the aspect height
                     // TODO deal with non-square images
                     .onTapGesture(count: 1, coordinateSpace: .local) { location in
+                        if !sdi.showReticle {
+                            return
+                        }
                         let frame = proxy.frame(in: .local)
                         tapToPlaceReticle(
                             store: store, sdi: sdi, img: img, location: location,
@@ -145,10 +148,12 @@ struct InspectorView: View {
                     .gesture(
                         MagnificationGesture()
                             .onChanged { val in
+                                if !sdi.showReticle {
+                                    return
+                                }
                                 let delta = val / self.lastScaleValue
                                 self.lastScaleValue = val
-                                let newScale = sdi.reticleScale * delta
-                                print("zoom = \(1.0/newScale)")
+                                let newScale = max(sdi.reticleScale * delta, 0.05)
                                 store.updateMetadata(
                                     sdi, reticleScale: newScale, reticleOffset: sdi.reticleOffset
                                 )
@@ -224,10 +229,18 @@ struct InspectorView: View {
 
                     VStack {
                         if let sdi = store.selected() {
-                            Toggle(isOn: $isChecked) {
-                                Text("Show reticle")
+                            let longSymbolName = "arrow.up.left.and.arrow.down.right.square"
+                            Button {
+                                store.updateMetadata(sdi, showReticle: !sdi.showReticle)
+                            } label: {
+                                HStack {
+                                    let symbolName =
+                                        sdi.showReticle ? "\(longSymbolName).fill" : longSymbolName
+                                    Image.init(systemName: symbolName)
+                                    Text("Reticle")
+                                }
                             }
-                            .toggleStyle(.checkbox)
+                            .buttonStyle(.borderless)
                             .padding(EdgeInsets(top: 4, leading: 2, bottom: 0, trailing: 2))
                         }
                         HStack {
