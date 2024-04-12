@@ -86,20 +86,10 @@ struct MyGuy {
     }
 }
 
-//@Observable
-//class Obool {
-//    var myBool: Bool = false
-//    init(_ bool: Bool) {
-//        self.myBool = bool
-//    }
-//}
-
 struct InspectorView: View {
     @Environment(ImageStore.self) private var store: ImageStore
 
     @State var lastScaleValue: CGFloat = 1.0
-    @State private var isChecked = false
-    //@Bindable var checked: Obool = Obool(false)
 
     var body: some View {
         return GeometryReader { proxy in
