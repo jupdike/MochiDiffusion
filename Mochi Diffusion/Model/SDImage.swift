@@ -42,11 +42,11 @@ struct SDImage: Identifiable, Hashable {
 
 extension SDImage {
     func filenameWithoutExtension() -> String {
-        "\(String(prompt.prefix(70)).trimmingCharacters(in: .whitespacesAndNewlines)).\(seed)"
+        "\(String(prompt.replacingOccurrences(of: "/", with: "_").prefix(70)).trimmingCharacters(in: .whitespacesAndNewlines)).\(seed)"
     }
 
     func filenameWithoutExtension(count: Int) -> String {
-        "\(String(prompt.prefix(70)).trimmingCharacters(in: .whitespacesAndNewlines)).\(count).\(seed)"
+        "\(String(prompt.replacingOccurrences(of: "/", with: "_").prefix(70)).trimmingCharacters(in: .whitespacesAndNewlines)).\(count).\(seed)"
     }
 
     @MainActor
