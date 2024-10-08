@@ -465,6 +465,7 @@
 				035EDFF8295A216500080D18 /* StepsView.swift in Sources */,
 				03061E6229AB9C06009AA2A2 /* FocusController.swift in Sources */,
 				C1220FC02AFB122F007E5055 /* ImageWellView.swift in Sources */,
+				A32721CB2BC2DF490073D3B9 /* Shapes.swift in Sources */,
 				03FD231B295F7A81006EEEE2 /* Upscaler.swift in Sources */,
 				0380934329AD504600EDBC8E /* StartingImageView.swift in Sources */,
 				03173C152999F5C700B03456 /* ImageController.swift in Sources */,
