@@ -50,7 +50,7 @@ struct StartingImageView: View {
 
         HStack {
             Text(
-                "Strength",
+                "⬅️ Image Strength ... Text Strength ➡️",
                 comment: "Label for starting image strength slider control"
             )
             .sidebarLabelFormat()
