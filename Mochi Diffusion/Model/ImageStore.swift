@@ -157,7 +157,8 @@ enum ImagesSortType: String {
     }
 
     func selected() -> SDImage? {
-        allImages.first { $0.id == selectedId }
+        guard selectedId != nil else { return nil }
+        return allImages.first { $0.id == selectedId }
     }
 
     func imageBefore(_ id: SDImage.ID?, wrap: Bool = true) -> SDImage.ID? {
