@@ -218,7 +218,7 @@ struct GalleryView: View {
                         }
                     } label: {
                         Text(
-                            "🎈 Red",
+                            "❤️ Red",
                             comment: "Mark this image Red, with Finder metadata tag"
                         )
                     }
@@ -238,7 +238,7 @@ struct GalleryView: View {
                         }
                     } label: {
                         Text(
-                            "🍋 Yellow",
+                            "⭐️ Yellow",
                             comment: "Mark this image Yellow, with Finder metadata tag"
                         )
                     }
@@ -278,7 +278,7 @@ struct GalleryView: View {
                         }
                     } label: {
                         Text(
-                            "🐘 Gray",
+                            "☑️ Gray",
                             comment: "Mark this image Gray, with Finder metadata tag"
                         )
                     }

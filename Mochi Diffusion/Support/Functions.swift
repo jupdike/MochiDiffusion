@@ -18,13 +18,13 @@ func compareVersion(_ thisVersion: String, _ compareTo: String) -> ComparisonRes
 
 func finderTagColorNumberToString(_ tagColorNumber: Int) -> String {
     switch tagColorNumber {
-    case 6: return "🎈"
+    case 6: return "❤️"
     case 7: return "🔥"
-    case 5: return "🍋"
+    case 5: return "⭐️"
     case 2: return "🍀"
     case 4: return "💎"
     case 3: return "🦄"
-    case 1: return "🐘"
+    case 1: return "☑️"
     // 0 means file system has no tag
     default: return ""
     }
