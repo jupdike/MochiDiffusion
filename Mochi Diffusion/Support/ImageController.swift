@@ -264,42 +264,49 @@ final class ImageController: ObservableObject {
             return
         }
 
-        var pipelineConfig = StableDiffusionPipeline.Configuration(prompt: prompt)
-        pipelineConfig.negativePrompt = negativePrompt
-        if let size = currentModel?.inputSize {
-            pipelineConfig.startingImage = startingImage?.scaledAndCroppedTo(size: size)
-        }
-        pipelineConfig.strength = Float(strength)
-        pipelineConfig.stepCount = Int(steps)
-        pipelineConfig.seed = seed
-        pipelineConfig.guidanceScale = Float(guidanceScale)
-        pipelineConfig.disableSafety = !safetyChecker
-        pipelineConfig.schedulerType = convertScheduler(scheduler)
-        for controlNet in currentControlNets {
-            if controlNet.name != nil, let size = currentModel?.inputSize,
-                let image = controlNet.image?.scaledAndCroppedTo(size: size)
-            {
-                pipelineConfig.controlNetInputs.append(image)
+        for _ in 0..<Int(numberOfImages) {
+            // make a new object each time ensure no overwriting old pipelineConfig
+            var pipelineConfig = StableDiffusionPipeline.Configuration(prompt: prompt)
+            pipelineConfig.negativePrompt = negativePrompt
+            if let size = currentModel?.inputSize {
+                pipelineConfig.startingImage = startingImage?.scaledAndCroppedTo(size: size)
             }
+            pipelineConfig.strength = Float(strength)
+            pipelineConfig.stepCount = Int(steps)
+            pipelineConfig.seed = seed
+            pipelineConfig.guidanceScale = Float(guidanceScale)
+            pipelineConfig.disableSafety = !safetyChecker
+            pipelineConfig.schedulerType = convertScheduler(scheduler)
+            for controlNet in currentControlNets {
+                if controlNet.name != nil, let size = currentModel?.inputSize,
+                    let image = controlNet.image?.scaledAndCroppedTo(size: size)
+                {
+                    pipelineConfig.controlNetInputs.append(image)
+                }
+            }
+            pipelineConfig.useDenoisedIntermediates = showGenerationPreview
+            // repeatedly add 1 image with a random strength, or other varying parameters (guidance scale)
+            // range makes this slightly more random ...
+            let minStrength = Float.maximum(Float(strength - 0.15), 0.05)
+            let maxStrength = Float.minimum(Float(strength + 0.15), 0.95)
+            pipelineConfig.strength = Float.random(in: minStrength...maxStrength)
+            // was: numberOfImage: Int(numberOfImages),
+            let genConfig = GenerationConfig(
+                pipelineConfig: pipelineConfig,
+                isXL: model.isXL,
+                isSD3: model.isSD3,
+                autosaveImages: autosaveImages,
+                imageDir: imageDir,
+                imageType: imageType,
+                numberOfImages: Int(1),
+                model: model,
+                mlComputeUnit: mlComputeUnitPreference.computeUnits(forModel: model),
+                scheduler: scheduler,
+                upscaleGeneratedImages: upscaleGeneratedImages,
+                controlNets: currentControlNets.filter { $0.image != nil }.compactMap(\.name)
+            )
+            self.generationQueue.append(genConfig)
         }
-        pipelineConfig.useDenoisedIntermediates = showGenerationPreview
-
-        let genConfig = GenerationConfig(
-            pipelineConfig: pipelineConfig,
-            isXL: model.isXL,
-            isSD3: model.isSD3,
-            autosaveImages: autosaveImages,
-            imageDir: imageDir,
-            imageType: imageType,
-            numberOfImages: Int(numberOfImages),
-            model: model,
-            mlComputeUnit: mlComputeUnitPreference.computeUnits(forModel: model),
-            scheduler: scheduler,
-            upscaleGeneratedImages: upscaleGeneratedImages,
-            controlNets: currentControlNets.filter { $0.image != nil }.compactMap(\.name)
-        )
-
-        self.generationQueue.append(genConfig)
         Task.detached(priority: .high) {
             await self.runGenerationJobs()
         }
