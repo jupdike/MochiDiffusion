@@ -130,6 +130,43 @@ extension NSImage {
         Self.urlCache[imageHash] = url
         return url
     }
+
+    var png: Data? { tiffRepresentation?.bitmap?.png }
+    func trySaveTo(_ imageURL: URL) -> Bool {
+        if let png = self.png {
+            do {
+                try png.write(to: imageURL)
+                print("PNG image saved")
+                return true
+            } catch {
+                print(error)
+                return false
+            }
+        }
+        print("failed to get PNG from NSImage")
+        return false
+    }
+}
+extension CGImage {
+    func trySaveTo(_ imageURL: URL) -> Bool {
+        let ns = NSImage(
+            cgImage: self,
+            size: NSSize(width: self.width, height: self.height)
+        )
+        if ns.trySaveTo(imageURL) {
+            return true
+        }
+        return false
+    }
+}
+
+// https://stackoverflow.com/questions/29262624/nsimage-to-nsdata-as-png-swift
+// https://stackoverflow.com/questions/46432709/saving-nsimage-in-different-formats-locally/46481947#46481947
+extension NSBitmapImageRep {
+    var png: Data? { representation(using: .png, properties: [:]) }
+}
+extension Data {
+    var bitmap: NSBitmapImageRep? { NSBitmapImageRep(data: self) }
 }
 
 extension Text {

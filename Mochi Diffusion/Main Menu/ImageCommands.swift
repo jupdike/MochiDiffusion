@@ -60,6 +60,18 @@ struct ImageCommands: Commands {
             Section {
                 Button {
                     guard let sdi = store.selected() else { return }
+                    Task {
+                        store.showMain = false
+                    }
+                } label: {
+                    Text(
+                        "Enter Project",
+                        comment: "Create or Edit Project using selected image as main image"
+                    )
+                }
+                .disabled(store.selected() == nil)
+                Button {
+                    guard let sdi = store.selected() else { return }
                     Task { await ImageController.shared.selectStartingImage(sdi: sdi) }
                 } label: {
                     Text(

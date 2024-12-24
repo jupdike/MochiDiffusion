@@ -36,6 +36,17 @@ final class Upscaler {
     }
 
     func upscale(cgImage: CGImage) async -> CGImage? {
+        let upscaledWidth = cgImage.width * 4
+        let upscaledHeight = cgImage.height * 4
+        let cgi2 = await upscale(
+            cgImage: cgImage,
+            upscaledWidth: upscaledWidth,
+            upscaledHeight: upscaledHeight
+        )
+        return cgi2
+    }
+
+    func upscale(cgImage: CGImage, upscaledWidth: Int, upscaledHeight: Int) async -> CGImage? {
         let handler = VNImageRequestHandler(cgImage: cgImage)
         let requests: [VNRequest] = [request]
 
@@ -43,8 +54,6 @@ final class Upscaler {
         guard let observation = self.request.results?.first as? VNPixelBufferObservation else {
             return nil
         }
-        let upscaledWidth = cgImage.width * 4
-        let upscaledHeight = cgImage.height * 4
         guard
             let pixelBuffer = resizePixelBuffer(
                 observation.pixelBuffer,

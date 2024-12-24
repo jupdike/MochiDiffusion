@@ -25,6 +25,7 @@ struct GenerationConfig: Sendable, Identifiable {
     var scheduler: Scheduler
     var upscaleGeneratedImages: Bool
     var controlNets: [String]
+    var overrideFilename: String
 }
 
 @Observable public final class ImageGenerator {
@@ -299,7 +300,11 @@ struct GenerationConfig: Sendable, Identifiable {
                 if config.autosaveImages && !config.imageDir.isEmpty {
                     var pathURL = URL(fileURLWithPath: config.imageDir, isDirectory: true)
                     let count = ImageStore.shared.images.endIndex + 1
-                    pathURL.append(path: sdi.filenameWithoutExtension(count: count))
+                    pathURL.append(
+                        path: config.overrideFilename.isEmpty
+                            ? sdi.filenameWithoutExtension(count: count)
+                            : config.overrideFilename
+                    )
 
                     let type = UTType.fromString(config.imageType)
                     guard let path = await sdi.save(pathURL, type: type) else { continue }

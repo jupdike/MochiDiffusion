@@ -18,14 +18,22 @@ struct AppView: View {
             SidebarView()
                 .navigationSplitViewColumnWidth(min: 250, ideal: 300, max: 450)
         } detail: {
-            GalleryView()
-                .inspector(isPresented: $isShowingInspector) {
-                    InspectorView()
-                        .inspectorColumnWidth(min: 300, ideal: 300, max: 500)
-                }
+            if store.showMain {
+                GalleryView()
+                    .inspector(isPresented: $isShowingInspector) {
+                        InspectorView()
+                            .inspectorColumnWidth(min: 300, ideal: 300, max: 500)
+                    }
+            } else {
+                ProjectView()
+            }
         }
         .toolbar {
-            GalleryToolbarView(isShowingInspector: $isShowingInspector)
+            if store.showMain {
+                GalleryToolbarView(isShowingInspector: $isShowingInspector)
+            } else {
+                ProjectToolbar()
+            }
         }
     }
 }

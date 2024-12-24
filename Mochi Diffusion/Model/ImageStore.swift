@@ -19,6 +19,8 @@ enum ImagesSortType: String {
 
     static let shared = ImageStore()
 
+    public var showMain: Bool = true
+
     private var allImages: [SDImage] = [] {
         didSet {
             updateFilteredImages()

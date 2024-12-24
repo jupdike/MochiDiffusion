@@ -48,6 +48,13 @@ final class ImageController: ObservableObject {
     var currentGeneration: GenerationConfig?
 
     @Published
+    var projectStatusMessage = ""
+
+    func setProjectStatusMessage(_ str: String) {
+        self.projectStatusMessage = str
+    }
+
+    @Published
     var isLoading = true
 
     @Published
@@ -260,6 +267,10 @@ final class ImageController: ObservableObject {
     }
 
     func generate() async {
+        await self.generate(self.imageDir, "")
+    }
+
+    func generate(_ overrideImageDir: String, _ overrideFilename: String) async {
         guard let model = currentModel else {
             return
         }
@@ -289,14 +300,15 @@ final class ImageController: ObservableObject {
             isXL: model.isXL,
             isSD3: model.isSD3,
             autosaveImages: autosaveImages,
-            imageDir: imageDir,
+            imageDir: overrideImageDir,
             imageType: imageType,
-            numberOfImages: Int(numberOfImages),
+            numberOfImages: !overrideFilename.isEmpty ? 1 : Int(numberOfImages),
             model: model,
             mlComputeUnit: mlComputeUnitPreference.computeUnits(forModel: model),
             scheduler: scheduler,
             upscaleGeneratedImages: upscaleGeneratedImages,
-            controlNets: currentControlNets.filter { $0.image != nil }.compactMap(\.name)
+            controlNets: currentControlNets.filter { $0.image != nil }.compactMap(\.name),
+            overrideFilename: overrideFilename
         )
 
         self.generationQueue.append(genConfig)
