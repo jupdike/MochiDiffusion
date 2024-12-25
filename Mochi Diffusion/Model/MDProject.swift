@@ -1,6 +1,6 @@
 //
-//  MDModel.swift
-//  Mochi Diffusion
+//  MDProject.swift
+//  Mochi Diffusion Project Model / Controller
 //
 //  Created by Jared Updike on 12/22/24.
 //
@@ -45,7 +45,20 @@ class MDProject {
         return p2
     }
 
+    //currentGeneration
     func testWith(cgImage: CGImage) {
+        Task {
+            //let _ = await controller.$generationQueue.sink {
+            //    // NB changes to 0 when dequeued, but not done until that generation finishes...
+            //    print("Generation Queue count changing to: \($0.count)")
+            //}
+            //let _ = await controller.$currentGeneration.sink {
+            //    print("Generation config is \($0 == nil ? "nil" : "non-nil")")
+            //}
+            //let _ = await generator.$state.sink {
+            //    print("State is now \($0)")
+            //}
+        }
         if let cgi2 = cgImage.cropping(to: CGRect(x: 128, y: 0, width: 256, height: 256)) {
             print("new size of image = \(cgi2.width) by \(cgi2.height)")
             let out = "\(self.folderPath)/test.png"
@@ -59,9 +72,8 @@ class MDProject {
                 await ImageController.shared.setStartingImage(image: cgi2)
                 await logMessage("Upscaling an image...")
                 await testUpscale(cgImage: cgImage)
-                await logMessage("Enqueue an image to generate...")
-                await ImageController.shared.generate(folderPath, "test-output-stem")
-                // TODO some async method in ImageController to wait until queue is empty again
+                await logMessage("Generating an image...")
+                await ImageController.shared.generate1(folderPath, "test-output-gen")
                 await logMessage("Done.")
             }
         }

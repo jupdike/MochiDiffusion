@@ -266,6 +266,80 @@ final class ImageController: ObservableObject {
         }
     }
 
+    func generate1(_ overrideImageDir: String, _ overrideFilename: String) async {
+        guard let model = currentModel else {
+            return
+        }
+
+        var pipelineConfig = StableDiffusionPipeline.Configuration(prompt: prompt)
+        pipelineConfig.negativePrompt = negativePrompt
+        if let size = currentModel?.inputSize {
+            pipelineConfig.startingImage = startingImage?.scaledAndCroppedTo(size: size)
+        }
+        pipelineConfig.strength = Float(strength)
+        pipelineConfig.stepCount = Int(steps)
+        pipelineConfig.seed = seed
+        pipelineConfig.guidanceScale = Float(guidanceScale)
+        pipelineConfig.disableSafety = !safetyChecker
+        pipelineConfig.schedulerType = convertScheduler(scheduler)
+        for controlNet in currentControlNets {
+            if controlNet.name != nil, let size = currentModel?.inputSize,
+                let image = controlNet.image?.scaledAndCroppedTo(size: size)
+            {
+                pipelineConfig.controlNetInputs.append(image)
+            }
+        }
+        pipelineConfig.useDenoisedIntermediates = showGenerationPreview
+
+        let genConfig = GenerationConfig(
+            pipelineConfig: pipelineConfig,
+            isXL: model.isXL,
+            isSD3: model.isSD3,
+            autosaveImages: autosaveImages,
+            imageDir: overrideImageDir,
+            imageType: imageType,
+            numberOfImages: !overrideFilename.isEmpty ? 1 : Int(numberOfImages),
+            model: model,
+            mlComputeUnit: mlComputeUnitPreference.computeUnits(forModel: model),
+            scheduler: scheduler,
+            upscaleGeneratedImages: upscaleGeneratedImages,
+            controlNets: currentControlNets.filter { $0.image != nil }.compactMap(\.name),
+            overrideFilename: overrideFilename
+        )
+
+        do {
+            try await ImageGenerator.shared.loadPipeline(
+                model: model,
+                computeUnit: genConfig.mlComputeUnit,
+                reduceMemory: self.reduceMemory)
+            try await ImageGenerator.shared.generate(genConfig)
+        } catch ImageGenerator.GeneratorError.requestedModelNotFound {
+            self.logger.error("Couldn't load \(genConfig.model.name) because it doesn't exist.")
+            await ImageGenerator.shared.updateState(
+                .ready("Couldn't load \(genConfig.model.name) because it doesn't exist."))
+        } catch ImageGenerator.GeneratorError.pipelineNotAvailable {
+            self.logger.error("Pipeline is not available.")
+            await ImageGenerator.shared.updateState(
+                .ready("There was a problem loading pipeline."))
+        } catch PipelineError.startingImageProvidedWithoutEncoder {
+            self.logger.error("The selected model does not support setting a starting image.")
+            await ImageGenerator.shared.updateState(
+                .ready("The selected model does not support setting a starting image."))
+        } catch Encoder.Error.sampleInputShapeNotCorrect {
+            self.logger.error(
+                "The starting image size doesn't match the size of the image that will be generated."
+            )
+            await ImageGenerator.shared.updateState(
+                .ready(
+                    "The starting image size doesn't match the size of the image that will be generated."
+                ))
+        } catch {
+            self.logger.error("There was a problem generating images: \(error)")
+            await ImageGenerator.shared.updateState(
+                .error("There was a problem generating images: \(error)"))
+        }
+    }
+
     func generate() async {
         await self.generate(self.imageDir, "")
     }

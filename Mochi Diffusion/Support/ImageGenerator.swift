@@ -310,7 +310,9 @@ struct GenerationConfig: Sendable, Identifiable {
                     guard let path = await sdi.save(pathURL, type: type) else { continue }
                     sdi.path = path.path(percentEncoded: false)
                 }
-                ImageStore.shared.add(sdi)
+                if config.overrideFilename.isEmpty {
+                    ImageStore.shared.add(sdi)
+                }
             }
             config.pipelineConfig.seed += 1
         }

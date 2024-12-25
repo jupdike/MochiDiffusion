@@ -62,7 +62,7 @@
 		9B7392C3298DEAC2006F03D5 /* Tokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */; };
 		A38C74E42D00EA2D00E99689 /* ProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A38C74E32D00EA2700E99689 /* ProjectView.swift */; };
 		A3B7736F2D02B68A00C91D60 /* ProjectToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B7736E2D02B68300C91D60 /* ProjectToolbar.swift */; };
-		A3BFF4B42D1860F100D8C9DC /* MDModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3BFF4B32D1860ED00D8C9DC /* MDModel.swift */; };
+		A3BFF4B42D1860F100D8C9DC /* MDProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */; };
 		C116D4952AFC382E00314FE3 /* MochiSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C116D4942AFC382E00314FE3 /* MochiSlider.swift */; };
 		C11A03882B099D9600540F7F /* JobQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11A03872B099D9600540F7F /* JobQueueView.swift */; };
 		C1220FC02AFB122F007E5055 /* ImageWellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1220FBF2AFB122F007E5055 /* ImageWellView.swift */; };
@@ -139,7 +139,7 @@
 		9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tokenizer.swift; sourceTree = "<group>"; };
 		A38C74E32D00EA2700E99689 /* ProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectView.swift; sourceTree = "<group>"; };
 		A3B7736E2D02B68300C91D60 /* ProjectToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectToolbar.swift; sourceTree = "<group>"; };
-		A3BFF4B32D1860ED00D8C9DC /* MDModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDModel.swift; sourceTree = "<group>"; };
+		A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDProject.swift; sourceTree = "<group>"; };
 		C116D4942AFC382E00314FE3 /* MochiSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MochiSlider.swift; sourceTree = "<group>"; };
 		C11A03872B099D9600540F7F /* JobQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobQueueView.swift; sourceTree = "<group>"; };
 		C1220FBF2AFB122F007E5055 /* ImageWellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageWellView.swift; sourceTree = "<group>"; };
@@ -278,7 +278,7 @@
 		0386DF8E29510D8700CA4CEB /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				A3BFF4B32D1860ED00D8C9DC /* MDModel.swift */,
+				A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */,
 				03173C17299B3C1300B03456 /* ImageStore.swift */,
 				0311C69829899A660074BCAE /* Metadata.swift */,
 				0395B3102995C70400465B73 /* Scheduler.swift */,
@@ -485,7 +485,7 @@
 				C1220FC02AFB122F007E5055 /* ImageWellView.swift in Sources */,
 				03FD231B295F7A81006EEEE2 /* Upscaler.swift in Sources */,
 				0380934329AD504600EDBC8E /* StartingImageView.swift in Sources */,
-				A3BFF4B42D1860F100D8C9DC /* MDModel.swift in Sources */,
+				A3BFF4B42D1860F100D8C9DC /* MDProject.swift in Sources */,
 				A38C74E42D00EA2D00E99689 /* ProjectView.swift in Sources */,
 				03173C152999F5C700B03456 /* ImageController.swift in Sources */,
 				036BFC22294B9F7500D8AD04 /* MochiDiffusionApp.swift in Sources */,
