@@ -23,6 +23,29 @@ struct ProjectToolbar: View {
                 Text("READY")
             }
 
+            if case .running(let progress) = generator.state, let progress = progress,
+                progress.stepCount > 0
+            {
+                let step = progress.step + 1
+                let stepValue = Double(step) / Double(progress.stepCount)
+
+                Button {
+                    //self.isStatusPopoverShown.toggle()
+                } label: {
+                    CircularProgressView(progress: stepValue)
+                        .frame(width: 16, height: 16)
+                }
+            } else if case .loading = generator.state {
+                Button {
+                    //self.isStatusPopoverShown.toggle()
+                } label: {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .controlSize(.small)
+                        .frame(width: 16, height: 16)
+                }
+            }
+
             Text(controller.projectStatusMessage)
                 .frame(height: 120)
 
