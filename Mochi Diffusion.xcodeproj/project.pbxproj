@@ -61,6 +61,11 @@
 		948853A52A543CB200B4AD86 /* GalleryPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948853A42A543CB200B4AD86 /* GalleryPreviewView.swift */; };
 		9B7392C3298DEAC2006F03D5 /* Tokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */; };
 		A38C74E42D00EA2D00E99689 /* ProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A38C74E32D00EA2700E99689 /* ProjectView.swift */; };
+		A39D86892D1DAB9C00D17829 /* PSDWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = A39D86862D1DAB9C00D17829 /* PSDWriter.m */; };
+		A39D868A2D1DAB9C00D17829 /* PSDLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = A39D86842D1DAB9C00D17829 /* PSDLayer.m */; };
+		A39D868B2D1DAB9C00D17829 /* NSDataPSDAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = A39D86822D1DAB9C00D17829 /* NSDataPSDAdditions.m */; };
+		A39D868E2D1DABF200D17829 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A39D868D2D1DABF200D17829 /* AppKit.framework */; };
+		A39D86902D1DAC0A00D17829 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A39D868F2D1DAC0A00D17829 /* CoreGraphics.framework */; };
 		A3B7736F2D02B68A00C91D60 /* ProjectToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B7736E2D02B68300C91D60 /* ProjectToolbar.swift */; };
 		A3BFF4B42D1860F100D8C9DC /* MDProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */; };
 		C116D4952AFC382E00314FE3 /* MochiSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C116D4942AFC382E00314FE3 /* MochiSlider.swift */; };
@@ -138,6 +143,16 @@
 		948853A42A543CB200B4AD86 /* GalleryPreviewView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GalleryPreviewView.swift; sourceTree = "<group>"; };
 		9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tokenizer.swift; sourceTree = "<group>"; };
 		A38C74E32D00EA2700E99689 /* ProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectView.swift; sourceTree = "<group>"; };
+		A39D86812D1DAB9C00D17829 /* NSDataPSDAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSDataPSDAdditions.h; sourceTree = "<group>"; };
+		A39D86822D1DAB9C00D17829 /* NSDataPSDAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NSDataPSDAdditions.m; sourceTree = "<group>"; };
+		A39D86832D1DAB9C00D17829 /* PSDLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PSDLayer.h; sourceTree = "<group>"; };
+		A39D86842D1DAB9C00D17829 /* PSDLayer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PSDLayer.m; sourceTree = "<group>"; };
+		A39D86852D1DAB9C00D17829 /* PSDWriter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PSDWriter.h; sourceTree = "<group>"; };
+		A39D86862D1DAB9C00D17829 /* PSDWriter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PSDWriter.m; sourceTree = "<group>"; };
+		A39D86872D1DAB9C00D17829 /* PSDWriter-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PSDWriter-Prefix.pch"; sourceTree = "<group>"; };
+		A39D868D2D1DABF200D17829 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		A39D868F2D1DAC0A00D17829 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		A39D86912D1DBDBF00D17829 /* MD-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MD-Bridging-Header.h"; sourceTree = "<group>"; };
 		A3B7736E2D02B68300C91D60 /* ProjectToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectToolbar.swift; sourceTree = "<group>"; };
 		A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDProject.swift; sourceTree = "<group>"; };
 		C116D4942AFC382E00314FE3 /* MochiSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MochiSlider.swift; sourceTree = "<group>"; };
@@ -155,6 +170,8 @@
 				036BFC4E294B9FDB00D8AD04 /* Path in Frameworks */,
 				03ADC8B9299581AF00B2843F /* StableDiffusion in Frameworks */,
 				0352E2A5294E2591003FBF25 /* Sparkle in Frameworks */,
+				A39D86902D1DAC0A00D17829 /* CoreGraphics.framework in Frameworks */,
+				A39D868E2D1DABF200D17829 /* AppKit.framework in Frameworks */,
 				0328BCE92BA11DEB004B5AE0 /* SwiftFormat in Frameworks */,
 				0388DEB0297B00FC008B1C1C /* CompactSlider in Frameworks */,
 			);
@@ -213,7 +230,9 @@
 		036BFC15294B9F7500D8AD04 = {
 			isa = PBXGroup;
 			children = (
+				A39D86882D1DAB9C00D17829 /* PSDWriter */,
 				036BFC20294B9F7500D8AD04 /* Mochi Diffusion */,
+				A39D868C2D1DABF200D17829 /* Frameworks */,
 				036BFC1F294B9F7500D8AD04 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -298,6 +317,30 @@
 				03FD2318295F74B6006EEEE2 /* RealESRGAN.mlmodel */,
 			);
 			path = Resources;
+			sourceTree = "<group>";
+		};
+		A39D86882D1DAB9C00D17829 /* PSDWriter */ = {
+			isa = PBXGroup;
+			children = (
+				A39D86912D1DBDBF00D17829 /* MD-Bridging-Header.h */,
+				A39D86812D1DAB9C00D17829 /* NSDataPSDAdditions.h */,
+				A39D86822D1DAB9C00D17829 /* NSDataPSDAdditions.m */,
+				A39D86832D1DAB9C00D17829 /* PSDLayer.h */,
+				A39D86842D1DAB9C00D17829 /* PSDLayer.m */,
+				A39D86852D1DAB9C00D17829 /* PSDWriter.h */,
+				A39D86862D1DAB9C00D17829 /* PSDWriter.m */,
+				A39D86872D1DAB9C00D17829 /* PSDWriter-Prefix.pch */,
+			);
+			path = PSDWriter;
+			sourceTree = "<group>";
+		};
+		A39D868C2D1DABF200D17829 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A39D868F2D1DAC0A00D17829 /* CoreGraphics.framework */,
+				A39D868D2D1DABF200D17829 /* AppKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -486,6 +529,9 @@
 				03FD231B295F7A81006EEEE2 /* Upscaler.swift in Sources */,
 				0380934329AD504600EDBC8E /* StartingImageView.swift in Sources */,
 				A3BFF4B42D1860F100D8C9DC /* MDProject.swift in Sources */,
+				A39D86892D1DAB9C00D17829 /* PSDWriter.m in Sources */,
+				A39D868A2D1DAB9C00D17829 /* PSDLayer.m in Sources */,
+				A39D868B2D1DAB9C00D17829 /* NSDataPSDAdditions.m in Sources */,
 				A38C74E42D00EA2D00E99689 /* ProjectView.swift in Sources */,
 				03173C152999F5C700B03456 /* ImageController.swift in Sources */,
 				036BFC22294B9F7500D8AD04 /* MochiDiffusionApp.swift in Sources */,
@@ -686,6 +732,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "PSDWriter/MD-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -719,6 +766,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "PSDWriter/MD-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

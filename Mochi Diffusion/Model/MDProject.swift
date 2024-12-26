@@ -7,6 +7,19 @@
 
 import SwiftUI
 
+// Task {
+//let _ = await controller.$generationQueue.sink {
+//    // NB changes to 0 when dequeued, but not done until that generation finishes...
+//    print("Generation Queue count changing to: \($0.count)")
+//}
+//let _ = await controller.$currentGeneration.sink {
+//    print("Generation config is \($0 == nil ? "nil" : "non-nil")")
+//}
+//let _ = await generator.$state.sink {
+//    print("State is now \($0)")
+//}
+// }
+
 // A Mochi Diffusion Project allows a workflow to include:
 // + cropping without using an external image editor;
 // + setting a cropped image as starting image for img2img;
@@ -45,20 +58,7 @@ class MDProject {
         return p2
     }
 
-    //currentGeneration
     func testWith(cgImage: CGImage) {
-        Task {
-            //let _ = await controller.$generationQueue.sink {
-            //    // NB changes to 0 when dequeued, but not done until that generation finishes...
-            //    print("Generation Queue count changing to: \($0.count)")
-            //}
-            //let _ = await controller.$currentGeneration.sink {
-            //    print("Generation config is \($0 == nil ? "nil" : "non-nil")")
-            //}
-            //let _ = await generator.$state.sink {
-            //    print("State is now \($0)")
-            //}
-        }
         if let cgi2 = cgImage.cropping(to: CGRect(x: 128, y: 0, width: 256, height: 256)) {
             print("new size of image = \(cgi2.width) by \(cgi2.height)")
             let out = "\(self.folderPath)/test.png"
@@ -71,15 +71,66 @@ class MDProject {
                 await logMessage("Setting Starting Image...")
                 await ImageController.shared.setStartingImage(image: cgi2)
                 await logMessage("Upscaling an image...")
-                await testUpscale(cgImage: cgImage)
+                let cgi3Maybe = await testUpscale(cgImage: cgImage)
+                guard let cgi3 = cgi3Maybe else {
+                    await logMessage("Error upscaling image.")
+                    return
+                }
                 await logMessage("Generating an image...")
                 await ImageController.shared.generate1(folderPath, "test-output-gen")
+                await logMessage("Writing out a PSD file...")
+                await testWrite(
+                    cgi3: cgi3,
+                    onTop: "test-output-gen.png"
+                )
                 await logMessage("Done.")
             }
         }
     }
 
-    func testUpscale(cgImage: CGImage) async {
+    func testWrite(cgi3: CGImage, onTop: String) async {
+        let size = CGSize(width: 1024, height: 1024)
+        let writer = PSDWriter(documentSize: size)
+        guard let w = writer else {
+            return
+        }
+        // add background
+        w.addLayer(
+            with: cgi3,
+            andName: "test",
+            andOpacity: 1.0,
+            andOffset: CGPoint(x: 0, y: 0)
+        )
+        // add small generated image!
+        let fullPath = "\(self.folderPath)/\(onTop)"
+        let nsMaybe: NSImage? = NSImage(contentsOfFile: fullPath)
+        guard let ns = nsMaybe else {
+            print("error loading image: \(fullPath)")
+            return
+        }
+        let cgImageUnman: Unmanaged<CGImage> = newCGImageForNSImage(ns)
+        let cgImage = cgImageUnman.takeRetainedValue() as CGImage?
+        guard let cgi = cgImage else {
+            print("error getting CGImage for image: \(fullPath)")
+            return
+        }
+        w.addLayer(
+            with: cgi,
+            andName: "test-on-top",
+            andOpacity: 1.0,
+            andOffset: CGPoint(x: 256, y: 0)
+        )
+        let out = "\(self.folderPath)/two-layer-test.psd"
+        let outputUrl = URL(fileURLWithPath: out)
+        let psd: Data = w.createPSDData()
+        do {
+            try psd.write(to: outputUrl)
+        } catch {
+            print("Failed to write PSD to \(outputUrl.absoluteString)")
+        }
+    }
+
+    func testUpscale(cgImage: CGImage) async -> CGImage? {
         if let cgi3 = await Upscaler.shared.upscale(
             cgImage: cgImage,
             upscaledWidth: cgImage.width * 2,
@@ -91,7 +142,9 @@ class MDProject {
             if cgi3.trySaveTo(imageURL2) {
                 print("PNG test2.png successfully written")
             }
+            return cgi3
         }
+        return nil
     }
 
     func logMessage(_ message: String) async {
