@@ -26,10 +26,12 @@ import SwiftUI
 // + Mochi Diffusion img2img generate / prompt editing on that starting image;
 // + automatic upscaling to keep growing the image canvas as new "zoomed-in" assets are created (eliminating any bicubic upscaling artifacts)
 // + some sort of progress or even just message updates when tasks start and finish (Upscaling... Upscaled. Generating... Generated. ...)
+//
 // The project
 // - tracks all the offsets and width/height of all the user's crops, relative to the original image;
-// - persists (JSON to disk) all the x,y,w,h,z-order for each cropped/scaled/generated image;
-// 1 allows a one-click PDF export using PSDWriter, using all that bookeeping information.
+// + persists (JSON to disk) all the x,y,w,h,z-order for each cropped/scaled/generated image;
+// + allows a one-click PDF export using PSDWriter
+// - using all that bookeeping information.
 //
 // The UI
 // - makes interactive cropping easy
@@ -59,6 +61,15 @@ class MDProject {
     }
 
     func testWith(cgImage: CGImage) {
+        let asset = MDProjectAsset(id: UUID(), dx: 0, dy: 0, width: 512, height: 512, subImages: [])
+        let path = "\(self.folderPath)/asset.json"
+        asset.write(path)
+        let asset2 = MDProjectAsset.read(path)
+        print("asset2: \(asset2.id)")
+        print("\(asset2.dx), \(asset2.dy) @ \(asset2.width), \(asset2.height)")
+    }
+
+    func testWith2(cgImage: CGImage) {
         if let cgi2 = cgImage.cropping(to: CGRect(x: 128, y: 0, width: 256, height: 256)) {
             print("new size of image = \(cgi2.width) by \(cgi2.height)")
             let out = "\(self.folderPath)/test.png"
@@ -164,4 +175,31 @@ class MDProject {
         testWith(cgImage: cgImage)
     }
 
+}
+
+struct MDProjectAsset: Hashable, Codable, Identifiable {
+    var id: UUID
+    var dx: Int
+    var dy: Int
+    var width: Int
+    var height: Int
+    var subImages: [MDProjectAsset]
+
+    func write(_ filePath: String) {
+        try? JSONEncoder()
+            .encode(self)
+            .write(
+                to: URL(fileURLWithPath: filePath),
+                options: .atomic
+            )
+    }
+
+    static func read(_ filePath: String) -> MDProjectAsset {
+        let asset: MDProjectAsset = try! JSONDecoder()
+            .decode(
+                MDProjectAsset.self,
+                from: Data(contentsOf: URL(fileURLWithPath: filePath))
+            )
+        return asset
+    }
 }

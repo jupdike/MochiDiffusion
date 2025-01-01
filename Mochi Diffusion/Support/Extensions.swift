@@ -284,3 +284,35 @@ extension String {
         return (self.count > length) ? self.prefix(length) + trailing : self
     }
 }
+
+// from https://dev.to/arnavmotwani/handling-persistent-data-in-swiftui-2-0-with-json-1h7
+// https://developer.apple.com/documentation/foundation/archives_and_serialization/encoding_and_decoding_custom_types
+// https://developer.apple.com/documentation/foundation/archives_and_serialization/using_json_with_custom_types
+// https://developer.apple.com/documentation/foundation/jsonencoder
+// https://developer.apple.com/documentation/foundation/jsondecoder
+extension Bundle {
+    static func load<T: Decodable>(_ filename: String) -> T {
+
+        // Example json file in our bundle
+        let readURL = Bundle.main.url(forResource: filename, withExtension: "json")!
+        // Initializing the url for the location where we store our data in filemanager
+        let documentDirectory = FileManager.default.urls(
+            for: .documentDirectory,
+            in: .userDomainMask
+        ).first!
+
+        // appending the file name to the url
+        let jsonURL =
+            documentDirectory
+            .appendingPathComponent(filename)
+            .appendingPathExtension("json")
+
+        // The following condition copies the example file in our bundle to the correct location if it isnt present
+        if !FileManager.default.fileExists(atPath: jsonURL.path) {
+            try? FileManager.default.copyItem(at: readURL, to: jsonURL)
+        }
+
+        // returning the parsed data
+        return try! JSONDecoder().decode(T.self, from: Data(contentsOf: jsonURL))
+    }
+}
