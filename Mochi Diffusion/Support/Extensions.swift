@@ -274,6 +274,17 @@ extension MLComputeUnits {
     }
 }
 
+func cgImage(fromPath fullPath: String) -> CGImage? {
+    let nsMaybe: NSImage? = NSImage(contentsOfFile: fullPath)
+    guard let ns = nsMaybe else {
+        print("error loading image: \(fullPath)")
+        return nil
+    }
+    let cgImageUnman: Unmanaged<CGImage> = newCGImageForNSImage(ns)
+    let cgImage = cgImageUnman.takeRetainedValue() as CGImage?
+    return cgImage
+}
+
 extension String {
     // Truncates the string to the specified length number of characters
     // and appends an optional trailing string if longer.

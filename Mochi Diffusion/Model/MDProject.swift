@@ -114,13 +114,7 @@ class MDProject {
         )
         // add small generated image!
         let fullPath = "\(self.folderPath)/\(onTop)"
-        let nsMaybe: NSImage? = NSImage(contentsOfFile: fullPath)
-        guard let ns = nsMaybe else {
-            print("error loading image: \(fullPath)")
-            return
-        }
-        let cgImageUnman: Unmanaged<CGImage> = newCGImageForNSImage(ns)
-        let cgImage = cgImageUnman.takeRetainedValue() as CGImage?
+        let cgImage = cgImage(fromPath: fullPath)
         guard let cgi = cgImage else {
             print("error getting CGImage for image: \(fullPath)")
             return
