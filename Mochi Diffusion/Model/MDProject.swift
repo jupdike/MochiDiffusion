@@ -40,7 +40,7 @@ import SwiftUI
 // The user can then import this entire PSD file stack of ordered and aligned layers, in one step,
 // into Serif Affinity Photo or Adobe Photoshop on iPad, and quickly manually mask/inpaint the layers
 // together to create one detailed, high-resolution image with hand-picked details.
-class MDProject {
+public class MDProject {
     let folderPath: String
     let controller: ImageController  // used to log progress status messages to UI
     let generator: ImageGenerator  // ... ? do we need this?
