@@ -62,18 +62,33 @@ public class MDProjectController {
     }
 
     // attempt to deserialize and restore state from disk, if possible
-    func loaded() -> MDProjectController {
-        store.project = self
-        return self
-    }
-
-    func testWith(cgImage: CGImage) {
-        //let asset = MDProjectAsset(id: UUID(), dx: 0, dy: 0, width: 512, height: 512, subImages: [])
-        //let path = "\(self.folderPath)/project.json"
-        //asset.write(path)
-        //let asset2 = MDProjectAsset.read(path)
-        //print("asset2: \(asset2.id)")
-        //print("\(asset2.dx), \(asset2.dy) @ \(asset2.width), \(asset2.height)")
+    // if not, create a new MDProject model object and write that out too
+    static func tryLoad(
+        fromProjectPath path: String,
+        withDefaultWidth w: Int,
+        defaultHeight h: Int
+    ) -> MDProject {
+        let projectModel = MDProject.read(path)
+        if let model = projectModel {
+            print("successfully read project.json from disk: \(path)")
+            return model
+        }
+        print("could not read project.json from disk @ '\(path)' so a new one was created")
+        // TODO also write out PNG image of root original image first
+        let asset = MDProjectAsset(
+            id: UUID(),
+            dx: 0,
+            dy: 0,
+            width: w,
+            height: h,
+            subImages: [])
+        let ret = MDProject(
+            baseWidth: w,
+            baseHeight: h,
+            rootImage: asset
+        )
+        ret.write(path)
+        return ret
     }
 
     func testWith2(cgImage: CGImage) {
@@ -87,7 +102,7 @@ public class MDProjectController {
             }
             Task {
                 await logMessage("Setting Starting Image...")
-                await ImageController.shared.setStartingImage(image: cgi2)
+                await controller.setStartingImage(image: cgi2)
                 await logMessage("Upscaling an image...")
                 let cgi3Maybe = await testUpscale(cgImage: cgImage)
                 guard let cgi3 = cgi3Maybe else {
@@ -95,7 +110,7 @@ public class MDProjectController {
                     return
                 }
                 await logMessage("Generating an image...")
-                await ImageController.shared.generate1(folderPath, "test-output-gen")
+                await controller.generate1(folderPath, "test-output-gen")
                 await logMessage("Writing out a PSD file...")
                 await testWrite(
                     cgi3: cgi3,
@@ -163,6 +178,10 @@ public class MDProjectController {
         await self.controller.setProjectStatusMessage(message)
     }
 
+    let baseWidth: Int
+    let baseHeight: Int
+    var projectModel: MDProject
+
     init(
         path: String,
         cgImage: CGImage,
@@ -170,17 +189,34 @@ public class MDProjectController {
         controller: ImageController,
         generator: ImageGenerator
     ) {
+        baseWidth = cgImage.width
+        baseHeight = cgImage.height
         self.store = store
         self.controller = controller
         self.generator = generator
         let folderPath = MDProjectController.imagePathToProjectFolder(path)
         self.folderPath = folderPath
-        //testWith(cgImage: cgImage)
+        let path = "\(self.folderPath)/project.json"
+        self.projectModel = MDProjectController.tryLoad(
+            fromProjectPath: path,
+            withDefaultWidth: baseWidth,
+            defaultHeight: baseHeight
+        )
+        print("\(projectModel)")
+        store.project = self
     }
-
 }
 
-struct MDProject: Hashable, Codable {
+struct MDProject: Hashable, Codable, CustomStringConvertible {
+    public var description: String {
+        let data = try? JSONEncoder().encode(self)
+        if let dat = data {
+            let str = String(decoding: dat, as: UTF8.self)
+            return "MDProject \(str)"
+        }
+        return "MDProject @ \(baseWidth) x \(baseHeight)"
+    }
+
     var baseWidth: Int
     var baseHeight: Int
     var rootImage: MDProjectAsset

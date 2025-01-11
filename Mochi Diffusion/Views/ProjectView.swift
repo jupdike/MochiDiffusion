@@ -23,7 +23,7 @@ struct ProjectView: View {
                     store: store,
                     controller: controller,
                     generator: generator
-                ).loaded()
+                )
                 let path2 = "\(project.folderPath)/bg.png"
                 let cgi2 = cgImage(fromPath: path2)!
                 let path3 = "\(project.folderPath)/over1.png"
