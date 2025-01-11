@@ -15,18 +15,12 @@ struct ProjectView: View {
     var body: some View {
         VStack(spacing: 0) {
             if let sdi = store.selected(),
-                let cgi = sdi.image
+                let cgi = sdi.image,
+                let projectController = store.projectController
             {
-                let project = MDProjectController(
-                    path: sdi.path,
-                    cgImage: cgi,
-                    store: store,
-                    controller: controller,
-                    generator: generator
-                )
-                let path2 = "\(project.folderPath)/bg.png"
+                let path2 = "\(projectController.folderPath)/bg.png"
                 let cgi2 = cgImage(fromPath: path2)!
-                let path3 = "\(project.folderPath)/over1.png"
+                let path3 = "\(projectController.folderPath)/over1.png"
                 let cgi3 = cgImage(fromPath: path3)!
                 GeometryReader { geometry in
                     let maxDim = min(geometry.size.height, geometry.size.width) * 0.95

@@ -203,7 +203,7 @@ public class MDProjectController {
             defaultHeight: baseHeight
         )
         print("\(projectModel)")
-        store.project = self
+        store.projectController = self
     }
 }
 

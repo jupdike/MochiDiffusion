@@ -55,7 +55,7 @@ struct ProjectToolbar: View {
                 guard let cgi = sdi.image else { return }
                 print("path to selected image: \(sdi.path)")
                 // project should be created when Enter Project command is executed on a selected image in store
-                if let project = store.project {
+                if let project = store.projectController {
                     project.testWith2(cgImage: cgi)
                 } else {
                     print("store somehow does not have a project")
@@ -68,9 +68,8 @@ struct ProjectToolbar: View {
             }
 
             Button {
-                store.showMain = true
                 // TODO maybe write out project just in case?
-                store.project = nil
+                store.projectController = nil
             } label: {
                 Text(
                     "X",

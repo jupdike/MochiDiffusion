@@ -60,8 +60,15 @@ struct ImageCommands: Commands {
             Section {
                 Button {
                     guard let sdi = store.selected() else { return }
+                    guard let cgi = sdi.image else { return }
                     Task {
-                        store.showMain = false
+                        store.projectController = MDProjectController(
+                            path: sdi.path,
+                            cgImage: cgi,
+                            store: store,
+                            controller: controller,
+                            generator: generator
+                        )
                     }
                 } label: {
                     Text(

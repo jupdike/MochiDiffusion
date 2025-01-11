@@ -19,8 +19,10 @@ enum ImagesSortType: String {
 
     static let shared = ImageStore()
 
-    public var showMain: Bool = true
-    public var project: MDProjectController? = nil
+    public var showMain: Bool {
+        return projectController == nil
+    }
+    public var projectController: MDProjectController? = nil
 
     private var allImages: [SDImage] = [] {
         didSet {
