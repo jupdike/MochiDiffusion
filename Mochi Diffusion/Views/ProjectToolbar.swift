@@ -54,12 +54,12 @@ struct ProjectToolbar: View {
                 guard let sdi = store.selected() else { return }
                 guard let cgi = sdi.image else { return }
                 print("path to selected image: \(sdi.path)")
-                let _ = MDProject(
-                    path: sdi.path,
-                    cgImage: cgi,
-                    controller: controller,
-                    generator: generator
-                )
+                // project should be created when Enter Project command is executed on a selected image in store
+                if let project = store.project {
+                    project.testWith2(cgImage: cgi)
+                } else {
+                    print("store somehow does not have a project")
+                }
             } label: {
                 Text(
                     "Test",
@@ -69,6 +69,8 @@ struct ProjectToolbar: View {
 
             Button {
                 store.showMain = true
+                // TODO maybe write out project just in case?
+                store.project = nil
             } label: {
                 Text(
                     "X",

@@ -40,8 +40,9 @@ import SwiftUI
 // The user can then import this entire PSD file stack of ordered and aligned layers, in one step,
 // into Serif Affinity Photo or Adobe Photoshop on iPad, and quickly manually mask/inpaint the layers
 // together to create one detailed, high-resolution image with hand-picked details.
-public class MDProject {
+public class MDProjectController {
     let folderPath: String
+    let store: ImageStore
     let controller: ImageController  // used to log progress status messages to UI
     let generator: ImageGenerator  // ... ? do we need this?
 
@@ -60,13 +61,19 @@ public class MDProject {
         return p2
     }
 
+    // attempt to deserialize and restore state from disk, if possible
+    func loaded() -> MDProjectController {
+        store.project = self
+        return self
+    }
+
     func testWith(cgImage: CGImage) {
-        let asset = MDProjectAsset(id: UUID(), dx: 0, dy: 0, width: 512, height: 512, subImages: [])
-        let path = "\(self.folderPath)/asset.json"
-        asset.write(path)
-        let asset2 = MDProjectAsset.read(path)
-        print("asset2: \(asset2.id)")
-        print("\(asset2.dx), \(asset2.dy) @ \(asset2.width), \(asset2.height)")
+        //let asset = MDProjectAsset(id: UUID(), dx: 0, dy: 0, width: 512, height: 512, subImages: [])
+        //let path = "\(self.folderPath)/project.json"
+        //asset.write(path)
+        //let asset2 = MDProjectAsset.read(path)
+        //print("asset2: \(asset2.id)")
+        //print("\(asset2.dx), \(asset2.dy) @ \(asset2.width), \(asset2.height)")
     }
 
     func testWith2(cgImage: CGImage) {
@@ -159,25 +166,24 @@ public class MDProject {
     init(
         path: String,
         cgImage: CGImage,
+        store: ImageStore,
         controller: ImageController,
         generator: ImageGenerator
     ) {
+        self.store = store
         self.controller = controller
         self.generator = generator
-        let folderPath = MDProject.imagePathToProjectFolder(path)
+        let folderPath = MDProjectController.imagePathToProjectFolder(path)
         self.folderPath = folderPath
-        testWith(cgImage: cgImage)
+        //testWith(cgImage: cgImage)
     }
 
 }
 
-struct MDProjectAsset: Hashable, Codable, Identifiable {
-    var id: UUID
-    var dx: Int
-    var dy: Int
-    var width: Int
-    var height: Int
-    var subImages: [MDProjectAsset]
+struct MDProject: Hashable, Codable {
+    var baseWidth: Int
+    var baseHeight: Int
+    var rootImage: MDProjectAsset
 
     func write(_ filePath: String) {
         try? JSONEncoder()
@@ -188,12 +194,21 @@ struct MDProjectAsset: Hashable, Codable, Identifiable {
             )
     }
 
-    static func read(_ filePath: String) -> MDProjectAsset {
-        let asset: MDProjectAsset = try! JSONDecoder()
+    static func read(_ filePath: String) -> MDProject? {
+        let asset: MDProject? = try? JSONDecoder()
             .decode(
-                MDProjectAsset.self,
+                MDProject.self,
                 from: Data(contentsOf: URL(fileURLWithPath: filePath))
             )
         return asset
     }
+}
+
+struct MDProjectAsset: Hashable, Codable, Identifiable {
+    var id: UUID
+    var dx: Int
+    var dy: Int
+    var width: Int
+    var height: Int
+    var subImages: [MDProjectAsset]
 }
