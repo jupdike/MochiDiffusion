@@ -33,6 +33,18 @@ struct ImageCommands: Commands {
                 }
                 .keyboardShortcut("G", modifiers: .command)
                 .disabled(controller.modelName.isEmpty)
+                Button {
+                    Task {
+                        await ImageController.shared.enqueueText()
+                    }
+                } label: {
+                    Text(
+                        "Enqueue Text File Prompts",
+                        comment: "Button to enqueue text file as series of prompts"
+                    )
+                }
+                .keyboardShortcut("E", modifiers: .command)
+                .disabled(controller.modelName.isEmpty)
             }
             Section {
                 Button {
