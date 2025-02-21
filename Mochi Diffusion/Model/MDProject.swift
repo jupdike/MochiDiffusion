@@ -205,6 +205,19 @@ public class MDProjectController {
         print("\(projectModel)")
         store.projectController = self
     }
+
+    func walkAssets() -> [MDProjectAsset]? {
+        var ret: [MDProjectAsset] = []
+        walkAssetsInner(self.projectModel.rootImage, &ret)
+        return ret
+    }
+
+    private func walkAssetsInner(_ asset: MDProjectAsset, _ ret: inout [MDProjectAsset]) {
+        ret.append(asset)
+        for sub in asset.subImages {
+            walkAssetsInner(sub, &ret)
+        }
+    }
 }
 
 struct MDProject: Hashable, Codable, CustomStringConvertible {

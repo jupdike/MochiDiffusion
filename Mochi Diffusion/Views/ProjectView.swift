@@ -18,36 +18,52 @@ struct ProjectView: View {
                 let cgi = sdi.image,
                 let projectController = store.projectController
             {
-                let path2 = "\(projectController.folderPath)/bg.png"
-                let cgi2 = cgImage(fromPath: path2)!
-                let path3 = "\(projectController.folderPath)/over1.png"
-                let cgi3 = cgImage(fromPath: path3)!
                 GeometryReader { geometry in
                     let maxDim = min(geometry.size.height, geometry.size.width) * 0.95
-                    ZStack {
-                        Image(cgi, scale: 1, label: Text("image label placeholder"))
-                            .resizable()
-                            //.aspectRatio(contentMode: .fit)
-                            .frame(width: 512.0, height: 512.0, alignment: .topLeading)
-                            .offset(x: 0, y: 0)
-                            .padding(4)
-                            .shadow(color: .black, radius: 8)
-                            .padding()
-                        Image(cgi3, scale: 0.5, label: Text("image label placeholder"))
-                            .resizable()
-                            .frame(width: 256.0, height: 256.0, alignment: .topLeading)
-                            .offset(x: -0.0, y: -128.0)
-                            .padding(4)
-                    }
-                    .frame(
-                        width: geometry.frame(in: .global).width,
-                        height: geometry.frame(in: .global).height
-                    )
-                    .scaleEffect(maxDim / 512.0, anchor: .center)
+                    getZStack()
+                        .frame(
+                            width: geometry.frame(in: .global).width,
+                            height: geometry.frame(in: .global).height
+                        )
+                        .scaleEffect(maxDim / 512.0, anchor: .center)
                 }
             } else {
                 Text("Failed to load image")
             }
+        }
+    }
+
+    func getZStack() -> some View {
+        if let sdi = store.selected(),
+            let cgi = sdi.image,
+            let projectController = store.projectController,
+            let assets = projectController.walkAssets(),
+            assets.count > 0
+        {
+            let path2 = "\(projectController.folderPath)/bg.png"
+            let cgi2 = cgImage(fromPath: path2)!
+            let path3 = "\(projectController.folderPath)/over1.png"
+            let cgi3 = cgImage(fromPath: path3)!
+            return AnyView(
+                ZStack {
+                    ForEach(assets) { (asset: MDProjectAsset) in
+                        Image(
+                            cgi,
+                            scale: CGFloat(asset.width / projectController.projectModel.baseWidth),
+                            label: Text("\(asset.id)")
+                        )
+                        .resizable()
+                        .frame(
+                            width: CGFloat(asset.width),
+                            height: CGFloat(asset.height),
+                            alignment: .topLeading
+                        )
+                        .offset(x: 0, y: 0)  // TODO use correct numbers
+                    }
+                }
+            )
+        } else {
+            return AnyView(Text("Failed to load image"))
         }
     }
 }
