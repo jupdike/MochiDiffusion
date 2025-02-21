@@ -25,6 +25,7 @@ enum ImagesSortType: String {
     public var projectController: MDProjectController? = nil
 
     private var allImages: [SDImage] = [] {
+        @MainActor
         didSet {
             updateFilteredImages()
             updateSortForImages()
@@ -38,6 +39,7 @@ enum ImagesSortType: String {
     private(set) var selectedId: SDImage.ID?
 
     var filters: [Filter] = [Filter]() {
+        @MainActor
         didSet {
             updateFilteredImages()
             updateSortForImages()
@@ -59,21 +61,19 @@ enum ImagesSortType: String {
         }
     }
 
-    @discardableResult
-    func add(_ sdi: SDImage) -> SDImage.ID {
-        withAnimation {
+    func add(_ sdi: SDImage) {
+        Task { @MainActor in
+            self.currentGeneratingImage = nil
             allImages.append(sdi)
-            currentGeneratingImage = nil
-            return sdi.id
         }
     }
 
     @discardableResult
     func add(_ sdis: [SDImage]) -> [SDImage.ID] {
-        withAnimation {
-            allImages.append(contentsOf: sdis)
-            return sdis.map { $0.id }
-        }
+        //withAnimation {
+        allImages.append(contentsOf: sdis)
+        return sdis.map { $0.id }
+        //}
     }
 
     func setCurrentGenerating(image: CGImage?) {
