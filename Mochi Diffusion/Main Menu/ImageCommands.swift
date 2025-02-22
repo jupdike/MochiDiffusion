@@ -88,6 +88,7 @@ struct ImageCommands: Commands {
                         comment: "Create or Edit Project using selected image as main image"
                     )
                 }
+                .keyboardShortcut("P", modifiers: .command)
                 .disabled(store.selected() == nil)
                 Button {
                     guard let sdi = store.selected() else { return }
