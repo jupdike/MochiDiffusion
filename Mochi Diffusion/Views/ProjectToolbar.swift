@@ -56,7 +56,7 @@ struct ProjectToolbar: View {
                 print("path to selected image: \(sdi.path)")
                 // project should be created when Enter Project command is executed on a selected image in store
                 if let project = store.projectController {
-                    project.testWith2(cgImage: cgi)
+                    project.testWith3(cgImage: cgi)
                 } else {
                     print("store somehow does not have a project")
                 }

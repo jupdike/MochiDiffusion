@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Vision
 
 // Task {
 //let _ = await controller.$generationQueue.sink {
@@ -88,6 +89,68 @@ public class MDProjectController {
             rootImage: asset
         )
         ret.write(path)
+        return ret
+    }
+
+    func testWith3(cgImage: CGImage) {
+        let _ = detectOneFace(cgImage: cgImage)
+    }
+
+    func detectOneFace(cgImage: CGImage) -> [MyShape] {
+        let myShape: [MyShape] = []  // empty shape list for error situation
+        print("Got an image of size \(cgImage.width) x \(cgImage.height).")
+        let detectFacesRequest = VNDetectFaceRectanglesRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage)
+        do {
+            try handler.perform([detectFacesRequest])
+        } catch {
+            print("Error performing face request")
+            print(error)
+            return myShape
+        }
+        guard let arr: [VNFaceObservation] = detectFacesRequest.results else {
+            print("Nil results for face request")
+            return myShape
+        }
+        print("Got \(arr.count) face results.")
+        let qualityRequest = VNDetectFaceCaptureQualityRequest()
+        let landmarksRequest = VNDetectFaceLandmarksRequest()
+        landmarksRequest.inputFaceObservations = arr
+        qualityRequest.inputFaceObservations = arr
+        do {
+            try handler.perform([landmarksRequest, qualityRequest])
+        } catch {
+            print("Error performing face pair of requests")
+            print(error)
+            return myShape
+        }
+        guard let quality = qualityRequest.results,
+            let qScore = quality[0].faceCaptureQuality
+        else {
+            print("Nil quality")
+            return myShape
+        }
+        print("Quality score: \(qScore)")
+        guard let landmarks = landmarksRequest.results,
+            landmarks.count > 0
+        else {
+            print("Nil landmarks")
+            return myShape
+        }
+        let rect = landmarks[0].boundingBox
+        print("Landmark bbox: \(rect.minX), \(rect.minY) to \(rect.maxX), \(rect.maxY)")
+        let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
+        let ret = [
+            MyShape(region: landmarks[0].landmarks?.faceContour, size: imageSize),
+            MyShape(region: landmarks[0].landmarks?.leftEye, size: imageSize),
+            MyShape(region: landmarks[0].landmarks?.rightEye, size: imageSize),
+            MyShape(region: landmarks[0].landmarks?.noseCrest, size: imageSize),
+            MyShape(region: landmarks[0].landmarks?.leftEyebrow, size: imageSize),
+            MyShape(region: landmarks[0].landmarks?.rightEyebrow, size: imageSize),
+            MyShape(region: landmarks[0].landmarks?.innerLips, size: imageSize),
+            MyShape(region: landmarks[0].landmarks?.outerLips, size: imageSize),
+            MyShape(region: landmarks[0].landmarks?.medianLine, size: imageSize),
+        ]
         return ret
     }
 
