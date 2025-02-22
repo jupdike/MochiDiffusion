@@ -23,22 +23,6 @@ struct FaceLandmark: Shape {
     }
 }
 
-struct MyShape: Hashable, Equatable, Identifiable {
-    let points: [CGPoint]
-    let pointsClassification: VNPointsClassification
-    let id: UUID = UUID()
-    init(region: VNFaceLandmarkRegion2D?, size: CGSize) {
-        guard let region2 = region else {
-            self.points = []
-            self.pointsClassification = .openPath
-            return
-        }
-        self.points = region2.pointsInImage(imageSize: size)
-            .map({ CGPoint(x: $0.x, y: size.height - 1 - $0.y) })
-        self.pointsClassification = region2.pointsClassification
-    }
-}
-
 struct ProjectView: View {
     @Environment(ImageStore.self) private var store: ImageStore
     @EnvironmentObject private var controller: ImageController
@@ -49,13 +33,13 @@ struct ProjectView: View {
             if let sdi = store.selected(),
                 let cgi = sdi.image,
                 let projectController = store.projectController,
-                let faceShapes: [MyShape] = Optional.some(
+                let myFace: MyFace = Optional.some(
                     projectController.detectOneFace(cgImage: cgi)
                 )
             {
                 GeometryReader { geometry in
                     let maxDim = min(geometry.size.height, geometry.size.width) * 0.95
-                    getZStack(faceShapes)
+                    getZStack(myFace)
                         .frame(
                             width: geometry.frame(in: .global).width,
                             height: geometry.frame(in: .global).height
@@ -68,9 +52,12 @@ struct ProjectView: View {
         }
     }
 
-    func getZStack(_ shapes: [MyShape]) -> some View {
+    func getZStack(_ face: MyFace) -> some View {
         if let sdi = store.selected(),
-            let cgi = sdi.image
+            let cgi = sdi.image,
+            let lineWidth = Optional.some(
+                ceil(Double(max(cgi.width, cgi.height)) * 0.002)
+            )
         {
             AnyView(
                 ZStack {
@@ -81,15 +68,30 @@ struct ProjectView: View {
                             height: CGFloat(cgi.height),
                             alignment: .topLeading
                         )
-                    ForEach(shapes) { shape in
+                    ForEach(face.shapes) { shape in
                         FaceLandmark(myShape: shape)
-                            .stroke(.white, lineWidth: 2)
+                            .stroke(.orange, lineWidth: lineWidth)
                             .frame(
                                 width: CGFloat(cgi.width),
                                 height: CGFloat(cgi.height),
                                 alignment: .topLeading
                             )
                     }
+                    FaceLandmark(myShape: face.centerShape)
+                        .stroke(.white, lineWidth: lineWidth)
+                        .frame(
+                            width: CGFloat(cgi.width),
+                            height: CGFloat(cgi.height),
+                            alignment: .topLeading
+                        )
+                    //FaceReticle()
+                    //    .fill(.white)
+                    //    .offset(x: face.faceRect.minX, y: face.faceRect.minY)
+                    //    .frame(
+                    //        width: face.faceRect.width,
+                    //        height: face.faceRect.height,
+                    //        alignment: .topLeading
+                    //    )
                 }
             )
         } else {

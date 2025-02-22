@@ -21,6 +21,37 @@ import Vision
 //}
 // }
 
+struct MyShape: Hashable, Equatable, Identifiable {
+    let points: [CGPoint]
+    let pointsClassification: VNPointsClassification
+    let id: UUID = UUID()
+    init(region: VNFaceLandmarkRegion2D?, size: CGSize) {
+        guard let region2 = region else {
+            self.points = []
+            self.pointsClassification = .openPath
+            return
+        }
+        self.points = region2.pointsInImage(imageSize: size)
+            .map({ CGPoint(x: $0.x, y: size.height - 1 - $0.y) })
+        self.pointsClassification = region2.pointsClassification
+    }
+    init(points: [CGPoint], classification: VNPointsClassification) {
+        self.points = points
+        self.pointsClassification = classification
+    }
+    static func emptyShape() -> MyShape {
+        return MyShape(points: [], classification: .openPath)
+    }
+}
+
+struct MyFace: Hashable, Equatable, Identifiable {
+    let id: UUID = UUID()
+    let shapes: [MyShape]
+    let faceRect: CGRect
+    let centerShape: MyShape
+    let center: CGPoint
+}
+
 // A Mochi Diffusion Project allows a workflow to include:
 // + cropping without using an external image editor;
 // + setting a cropped image as starting image for img2img;
@@ -31,7 +62,7 @@ import Vision
 // The project
 // - tracks all the offsets and width/height of all the user's crops, relative to the original image;
 // + persists (JSON to disk) all the x,y,w,h,z-order for each cropped/scaled/generated image;
-// + allows a one-click PDF export using PSDWriter
+// + allows a one-click PSD export using PSDWriter
 // - using all that bookeeping information.
 //
 // The UI
@@ -96,8 +127,77 @@ public class MDProjectController {
         let _ = detectOneFace(cgImage: cgImage)
     }
 
-    func detectOneFace(cgImage: CGImage) -> [MyShape] {
-        let myShape: [MyShape] = []  // empty shape list for error situation
+    func tipOfNose(
+        noseCrest: VNFaceLandmarkRegion2D?,
+        median: VNFaceLandmarkRegion2D?,
+        size: CGSize
+    ) -> CGPoint {
+        let ret: CGPoint = CGPoint(x: size.width * 0.5, y: 0)
+        guard let region2 = noseCrest else {
+            print("Nil nose crest region")
+            return ret
+        }
+        guard let regionMedian = median else {
+            print("Nil nose crest region")
+            return ret
+        }
+        let points = region2.pointsInImage(imageSize: size)
+            .map({ CGPoint(x: $0.x, y: size.height - 1 - $0.y) })
+        let n = points.count
+        guard n >= 2 else {
+            print("Not enough points in node crest region to find tip of nose")
+            return ret
+        }
+        let lastPt = points[n - 1]
+        let lastPt2 = points[n - 2]
+        let cy = lastPt.y * 0.5 + lastPt2.y * 0.5
+        // find cx by approx. intersection of horizontal line @ cy with face median countour
+        let medianPts = regionMedian.pointsInImage(imageSize: size)
+            .map({ CGPoint(x: $0.x, y: size.height - 1 - $0.y) })
+        let m1 = medianPts.count - 1
+        var cx = lastPt.x  // temporaty, likely off-center
+        for i in 0..<m1 {
+            let one = medianPts[i]
+            let two = medianPts[i + 1]
+            if (one.y < cy && cy < two.y) || (two.y < cy && cy < one.y) {
+                // keep center x value of line segment
+                cx = one.x * 0.5 + two.x * 0.5
+            }
+        }
+        return CGPoint(x: cx, y: cy)
+    }
+
+    func findRadius(
+        _ faceContourRegion: VNFaceLandmarkRegion2D?,
+        size: CGSize,
+        center: CGPoint
+    ) -> CGFloat {
+        var r2: CGFloat = 0
+        guard let region2 = faceContourRegion else {
+            print("Nil face contour region")
+            return r2
+        }
+        let points = region2.pointsInImage(imageSize: size)
+            .map({ CGPoint(x: $0.x, y: size.height - 1 - $0.y) })
+        for pt in points {
+            let dx = pt.x - center.x
+            let dy = pt.y - center.y
+            let ptR2 = dx * dx + dy * dy
+            if ptR2 > r2 {
+                r2 = ptR2
+            }
+        }
+        return sqrt(r2)
+    }
+
+    func detectOneFace(cgImage: CGImage) -> MyFace {
+        let emptyShapes: [MyShape] = []  // empty shape list for error situation
+        let emptyFace: MyFace = MyFace(
+            shapes: emptyShapes,
+            faceRect: CGRect(),
+            centerShape: MyShape.emptyShape(),
+            center: CGPoint(x: 20, y: 20)
+        )
         print("Got an image of size \(cgImage.width) x \(cgImage.height).")
         let detectFacesRequest = VNDetectFaceRectanglesRequest()
         let handler = VNImageRequestHandler(cgImage: cgImage)
@@ -106,11 +206,11 @@ public class MDProjectController {
         } catch {
             print("Error performing face request")
             print(error)
-            return myShape
+            return emptyFace
         }
         guard let arr: [VNFaceObservation] = detectFacesRequest.results else {
             print("Nil results for face request")
-            return myShape
+            return emptyFace
         }
         print("Got \(arr.count) face results.")
         let qualityRequest = VNDetectFaceCaptureQualityRequest()
@@ -122,25 +222,25 @@ public class MDProjectController {
         } catch {
             print("Error performing face pair of requests")
             print(error)
-            return myShape
+            return emptyFace
         }
         guard let quality = qualityRequest.results,
             let qScore = quality[0].faceCaptureQuality
         else {
             print("Nil quality")
-            return myShape
+            return emptyFace
         }
         print("Quality score: \(qScore)")
         guard let landmarks = landmarksRequest.results,
             landmarks.count > 0
         else {
             print("Nil landmarks")
-            return myShape
+            return emptyFace
         }
         let rect = landmarks[0].boundingBox
         print("Landmark bbox: \(rect.minX), \(rect.minY) to \(rect.maxX), \(rect.maxY)")
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
-        let ret = [
+        let shapes = [
             MyShape(region: landmarks[0].landmarks?.faceContour, size: imageSize),
             MyShape(region: landmarks[0].landmarks?.leftEye, size: imageSize),
             MyShape(region: landmarks[0].landmarks?.rightEye, size: imageSize),
@@ -151,7 +251,42 @@ public class MDProjectController {
             MyShape(region: landmarks[0].landmarks?.outerLips, size: imageSize),
             MyShape(region: landmarks[0].landmarks?.medianLine, size: imageSize),
         ]
-        return ret
+
+        let center: CGPoint = tipOfNose(
+            noseCrest: landmarks[0].landmarks?.noseCrest,
+            median: landmarks[0].landmarks?.medianLine,
+            size: imageSize)
+        let rectRad: CGFloat = findRadius(
+            landmarks[0].landmarks?.faceContour,
+            size: imageSize,
+            center: center
+        )
+        let faceRect: CGRect = CGRect(
+            x: center.x - rectRad,
+            y: center.y - rectRad,
+            width: rectRad * 2,
+            height: rectRad * 2
+        )
+        let centerPts: [CGPoint] = [
+            CGPoint(x: center.x, y: center.y),
+            CGPoint(x: center.x - rectRad, y: center.y),
+            CGPoint(x: center.x, y: center.y),
+            CGPoint(x: center.x, y: center.y - rectRad),
+            CGPoint(x: center.x, y: center.y),
+            CGPoint(x: center.x + rectRad, y: center.y),
+            CGPoint(x: center.x, y: center.y),
+            CGPoint(x: center.x, y: center.y + rectRad),
+            CGPoint(x: center.x, y: center.y),
+        ]
+        return MyFace(
+            shapes: shapes,
+            faceRect: faceRect,
+            centerShape: MyShape(
+                points: centerPts,
+                classification: .openPath
+            ),
+            center: center
+        )
     }
 
     func testWith2(cgImage: CGImage) {
