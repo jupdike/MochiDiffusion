@@ -413,8 +413,9 @@ public class MDProjectController {
         let oneHead = 1.1 * (0.5 * oneHeadC + 0.5 * max(oneHeadC, bodyRectScaled.width))
         let rBottom = myBounds.maxY + oneHead * 0.95
         let rCenter = bodyRectScaled.midX + 0.5
+        let rTop = min(imageSize.height - 1 - oneHead, rBottom - oneHead)
         let anotherRect = CGRect(
-            x: rCenter - oneHead * 0.5, y: rBottom - oneHead, width: oneHead, height: oneHead
+            x: rCenter - oneHead * 0.5, y: rTop, width: oneHead, height: oneHead
         )
         return MyFace(
             shapes: shapes,
