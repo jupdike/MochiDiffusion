@@ -361,13 +361,16 @@ public class MDProjectController {
         // favor the generally larger rectangle, if there is a size discrepancy
         let r = 0.7 * rectRad + 0.3 * myBounds.avgDim * 0.5
         let finalRect = CGRect(x: cx2 - r, y: cy2 - r, width: r * 2, height: r * 2)
-        let fpts: [CGPoint] = [
-            finalRect.topLeft,
-            finalRect.topRight,
-            finalRect.bottomRight,
-            finalRect.bottomLeft,
-            finalRect.topLeft,
-        ]
+        // uses brow to nose instead, but if the head is tilted down, this will help capture
+        // more of top of head
+        let noseToChin = abs(myBounds.minY - center.y)
+        let hRad = r + noseToChin
+        let headRect = CGRect(
+            x: cx2 - hRad,
+            y: max(0, cy2 - hRad + dy - hRad * 0.4),
+            width: hRad * 2,
+            height: hRad * 2
+        )
         return MyFace(
             shapes: shapes,
             faceRect: faceRect,
@@ -382,7 +385,10 @@ public class MDProjectController {
                 classification: .openPath
             ),
             finalRect: finalRect,
-            finalShapes: [MyShape(points: fpts, classification: .openPath)]
+            finalShapes: [
+                MyShape(points: finalRect.toPathPoints(), classification: .openPath),
+                MyShape(points: headRect.toPathPoints(), classification: .openPath),
+            ]
         )
     }
 

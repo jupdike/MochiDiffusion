@@ -168,6 +168,15 @@ extension CGRect {
     var maxDim: CGFloat { max(self.width, self.height) }
     var minDim: CGFloat { min(self.width, self.height) }
     var avgDim: CGFloat { 0.5 * self.width + 0.5 * self.height }
+    func toPathPoints() -> [CGPoint] {
+        [
+            self.topLeft,
+            self.topRight,
+            self.bottomRight,
+            self.bottomLeft,
+            self.topLeft,
+        ]
+    }
 }
 
 // https://stackoverflow.com/questions/29262624/nsimage-to-nsdata-as-png-swift
