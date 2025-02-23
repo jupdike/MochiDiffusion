@@ -160,6 +160,16 @@ extension CGImage {
     }
 }
 
+extension CGRect {
+    var topLeft: CGPoint { self.origin }
+    var topRight: CGPoint { CGPoint(x: self.maxX, y: self.minY) }
+    var bottomLeft: CGPoint { CGPoint(x: self.minX, y: self.maxY) }
+    var bottomRight: CGPoint { CGPoint(x: self.maxX, y: self.maxY) }
+    var maxDim: CGFloat { max(self.width, self.height) }
+    var minDim: CGFloat { min(self.width, self.height) }
+    var avgDim: CGFloat { 0.5 * self.width + 0.5 * self.height }
+}
+
 // https://stackoverflow.com/questions/29262624/nsimage-to-nsdata-as-png-swift
 // https://stackoverflow.com/questions/46432709/saving-nsimage-in-different-formats-locally/46481947#46481947
 extension NSBitmapImageRep {

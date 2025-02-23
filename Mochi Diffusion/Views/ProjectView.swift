@@ -56,7 +56,7 @@ struct ProjectView: View {
         if let sdi = store.selected(),
             let cgi = sdi.image,
             let lineWidth = Optional.some(
-                ceil(Double(max(cgi.width, cgi.height)) * 0.002)
+                ceil(Double(max(cgi.width, cgi.height)) * 0.001)
             )
         {
             AnyView(
@@ -77,13 +77,30 @@ struct ProjectView: View {
                                 alignment: .topLeading
                             )
                     }
-                    FaceLandmark(myShape: face.centerShape)
-                        .stroke(.white, lineWidth: lineWidth)
+                    FaceLandmark(myShape: face.boundsShape)
+                        .stroke(.red, lineWidth: lineWidth)
                         .frame(
                             width: CGFloat(cgi.width),
                             height: CGFloat(cgi.height),
                             alignment: .topLeading
                         )
+                    FaceLandmark(myShape: face.centerShape)
+                        .stroke(.yellow, lineWidth: lineWidth)
+                        .frame(
+                            width: CGFloat(cgi.width),
+                            height: CGFloat(cgi.height),
+                            alignment: .topLeading
+                        )
+                    ForEach(face.finalShapes) { shape in
+                        FaceLandmark(myShape: shape)
+                            .stroke(.white, lineWidth: lineWidth * 2)
+                            .frame(
+                                width: CGFloat(cgi.width),
+                                height: CGFloat(cgi.height),
+                                alignment: .topLeading
+                            )
+                    }
+
                     //FaceReticle()
                     //    .fill(.white)
                     //    .offset(x: face.faceRect.minX, y: face.faceRect.minY)

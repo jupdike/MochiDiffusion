@@ -50,6 +50,10 @@ struct MyFace: Hashable, Equatable, Identifiable {
     let faceRect: CGRect
     let centerShape: MyShape
     let center: CGPoint
+    let bounds: CGRect
+    let boundsShape: MyShape
+    let finalRect: CGRect
+    let finalShapes: [MyShape]
 }
 
 // A Mochi Diffusion Project allows a workflow to include:
@@ -167,6 +171,54 @@ public class MDProjectController {
         return CGPoint(x: cx, y: cy)
     }
 
+    func getBounds(
+        contour contourRegion: VNFaceLandmarkRegion2D?,
+        brow1 brow1Region: VNFaceLandmarkRegion2D?,
+        brow2 brow2Region: VNFaceLandmarkRegion2D?,
+        size: CGSize
+    )
+        -> CGRect
+    {
+        let emptyRect = CGRect()
+        guard let region1 = brow1Region else {
+            print("Nil face contour region")
+            return emptyRect
+        }
+        guard let region2 = brow2Region else {
+            print("Nil face contour region")
+            return emptyRect
+        }
+        guard let region3 = contourRegion else {
+            print("Nil face contour region")
+            return emptyRect
+        }
+        let points1 = region1.pointsInImage(imageSize: size)
+            .map({ CGPoint(x: $0.x, y: size.height - 1 - $0.y) })
+        let points2 = region2.pointsInImage(imageSize: size)
+            .map({ CGPoint(x: $0.x, y: size.height - 1 - $0.y) })
+        let points3 = region3.pointsInImage(imageSize: size)
+            .map({ CGPoint(x: $0.x, y: size.height - 1 - $0.y) })
+        var points: [CGPoint] = []
+        points.append(contentsOf: points1)
+        points.append(contentsOf: points2)
+        points.append(contentsOf: points3)
+        var minX: CGFloat = size.width
+        var minY: CGFloat = size.height
+        var maxX: CGFloat = 0
+        var maxY: CGFloat = 0
+        for pt in points {
+            minX = min(minX, pt.x)
+            minY = min(minY, pt.y)
+            maxX = max(maxX, pt.x)
+            maxY = max(maxY, pt.y)
+        }
+        if minX >= maxX || minY >= maxY {
+            print("Invalid face region to find boudning box")
+            return emptyRect
+        }
+        return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
+    }
+
     func findRadius(
         _ faceContourRegion: VNFaceLandmarkRegion2D?,
         size: CGSize,
@@ -196,7 +248,11 @@ public class MDProjectController {
             shapes: emptyShapes,
             faceRect: CGRect(),
             centerShape: MyShape.emptyShape(),
-            center: CGPoint(x: 20, y: 20)
+            center: CGPoint(x: 20, y: 20),
+            bounds: CGRect(),
+            boundsShape: MyShape.emptyShape(),
+            finalRect: CGRect(),
+            finalShapes: [MyShape.emptyShape()]
         )
         print("Got an image of size \(cgImage.width) x \(cgImage.height).")
         let detectFacesRequest = VNDetectFaceRectanglesRequest()
@@ -267,6 +323,12 @@ public class MDProjectController {
             width: rectRad * 2,
             height: rectRad * 2
         )
+        let myBounds: CGRect = getBounds(
+            contour: landmarks[0].landmarks?.faceContour,
+            brow1: landmarks[0].landmarks?.leftEyebrow,
+            brow2: landmarks[0].landmarks?.rightEyebrow,
+            size: imageSize
+        )
         let centerPts: [CGPoint] = [
             CGPoint(x: center.x, y: center.y),
             CGPoint(x: center.x - rectRad, y: center.y),
@@ -278,6 +340,34 @@ public class MDProjectController {
             CGPoint(x: center.x, y: center.y + rectRad),
             CGPoint(x: center.x, y: center.y),
         ]
+        //  2 3
+        //  1 4
+        let uno = CGPoint(x: myBounds.minX, y: myBounds.maxY)
+        let dos = CGPoint(x: myBounds.minX, y: myBounds.minY)
+        let tre = CGPoint(x: myBounds.maxX, y: myBounds.minY)
+        let qua = CGPoint(x: myBounds.maxX, y: myBounds.maxY)
+        // square with an X across it
+        let bpts: [CGPoint] = [uno, dos, tre, qua, dos, tre, uno, qua]
+        // This is unintuitive but since faces are 3-D, move the center in opposite direction
+        // to capture ear on the back side.
+        // So first: get a vector from center of myBounds (chin and brows) to tip-of-nose (center)
+        let dx = myBounds.midX - center.x
+        let dy = myBounds.midY - center.y
+        // then move in opposite direction to capture ear sticking out of opposite side,
+        // instead of a bunch of negative space on the front side of the face, in the
+        // direction the nose is pointing
+        let cx2 = (0.45 * center.x + 0.55 * myBounds.midX) + dx
+        let cy2 = (0.45 * center.y + 0.55 * myBounds.midY) + dy
+        // favor the generally larger rectangle, if there is a size discrepancy
+        let r = 0.7 * rectRad + 0.3 * myBounds.avgDim * 0.5
+        let finalRect = CGRect(x: cx2 - r, y: cy2 - r, width: r * 2, height: r * 2)
+        let fpts: [CGPoint] = [
+            finalRect.topLeft,
+            finalRect.topRight,
+            finalRect.bottomRight,
+            finalRect.bottomLeft,
+            finalRect.topLeft,
+        ]
         return MyFace(
             shapes: shapes,
             faceRect: faceRect,
@@ -285,7 +375,14 @@ public class MDProjectController {
                 points: centerPts,
                 classification: .openPath
             ),
-            center: center
+            center: center,
+            bounds: myBounds,
+            boundsShape: MyShape(
+                points: bpts,
+                classification: .openPath
+            ),
+            finalRect: finalRect,
+            finalShapes: [MyShape(points: fpts, classification: .openPath)]
         )
     }
 
