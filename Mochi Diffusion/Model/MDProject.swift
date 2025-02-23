@@ -448,6 +448,17 @@ public class MDProjectController {
         let bigOverlapRatio = bigComboOverlap.width * bigComboOverlap.height / comboArea
         let bigEnough = !(comboArea > 0.9 * imageArea)
         // if bigEnough, also add some rectangles below anotherRect
+        let extraY = belowRect.maxY  // smallish rectangle
+        let extraRect = CGRect(
+            x: belowRect.minX,
+            y: min(imageSize.height - 1 - belowRect.height, extraY),
+            width: belowRect.width,
+            height: belowRect.height
+        )
+        let extraOverlapRect = extraRect.intersection(belowRect)
+        let extraOverlapRatio =
+            extraOverlapRect.width * extraOverlapRect.height / (belowRect.width * belowRect.height)
+        // now gather up relevant rectangles
         var fShapes: [MyShape] = []
         if bigEnough {
             if bigOverlapRatio < 0.4 {
@@ -456,6 +467,9 @@ public class MDProjectController {
                 )
             }
             fShapes.append(MyShape(points: comboRect.toPathPoints(), classification: .openPath))
+            if extraOverlapRatio < 0.5 {
+                fShapes.append(MyShape(points: extraRect.toPathPoints(), classification: .openPath))
+            }
         }
         if bigEnough && overlapRatio < 0.7 {
             fShapes.append(MyShape(points: belowRect.toPathPoints(), classification: .openPath))
