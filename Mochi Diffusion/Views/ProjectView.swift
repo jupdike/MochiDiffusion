@@ -100,15 +100,6 @@ struct ProjectView: View {
                                 alignment: .topLeading
                             )
                     }
-
-                    //FaceReticle()
-                    //    .fill(.white)
-                    //    .offset(x: face.faceRect.minX, y: face.faceRect.minY)
-                    //    .frame(
-                    //        width: face.faceRect.width,
-                    //        height: face.faceRect.height,
-                    //        alignment: .topLeading
-                    //    )
                 }
             )
         } else {

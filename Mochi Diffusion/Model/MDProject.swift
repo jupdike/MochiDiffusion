@@ -242,6 +242,30 @@ public class MDProjectController {
         return sqrt(r2)
     }
 
+    // maybe this is really just a torso finder?
+    func findBodyRects(cgImage: CGImage) -> CGRect? {
+        let detectHumanRequest = VNDetectHumanRectanglesRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage)
+        do {
+            try handler.perform([detectHumanRequest])
+        } catch {
+            print("Error performing face request")
+            print(error)
+            return nil
+        }
+        guard let arr: [VNHumanObservation] = detectHumanRequest.results,
+            arr.count > 0
+        else {
+            print("No human observed?")
+            return nil
+        }
+        print("ARR -- human rectangles count = \(arr.count)")
+        for vnho in arr {
+            print("VNHO - upperOnly? \(vnho.upperBodyOnly) -- \(vnho.boundingBox)")
+        }
+        return arr[0].boundingBox
+    }
+
     func detectOneFace(cgImage: CGImage) -> MyFace {
         let emptyShapes: [MyShape] = []  // empty shape list for error situation
         let emptyFace: MyFace = MyFace(
@@ -255,6 +279,18 @@ public class MDProjectController {
             finalShapes: [MyShape.emptyShape()]
         )
         print("Got an image of size \(cgImage.width) x \(cgImage.height).")
+        guard let bodyRect = findBodyRects(cgImage: cgImage) else {
+            print("Expected an image of a human")
+            return emptyFace
+        }
+        let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
+        let h = bodyRect.height * imageSize.height
+        let bodyRectScaled = CGRect(
+            x: bodyRect.origin.x * imageSize.width,
+            y: imageSize.height - 1 - bodyRect.origin.y * imageSize.height - h,
+            width: bodyRect.width * imageSize.width,
+            height: h
+        )
         let detectFacesRequest = VNDetectFaceRectanglesRequest()
         let handler = VNImageRequestHandler(cgImage: cgImage)
         do {
@@ -295,7 +331,6 @@ public class MDProjectController {
         }
         let rect = landmarks[0].boundingBox
         print("Landmark bbox: \(rect.minX), \(rect.minY) to \(rect.maxX), \(rect.maxY)")
-        let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
         let shapes = [
             MyShape(region: landmarks[0].landmarks?.faceContour, size: imageSize),
             MyShape(region: landmarks[0].landmarks?.leftEye, size: imageSize),
@@ -372,6 +407,15 @@ public class MDProjectController {
             width: hRad * 2,
             height: hRad * 2
         )
+        let oneHeadA = 1.2 * (0.5 * headRect.height + 0.5 * faceRect.height)
+        let oneHeadB = 1.2 * (bodyRectScaled.maxY - faceRect.maxY)
+        let oneHeadC = 0.5 * oneHeadA + 0.5 * oneHeadB
+        let oneHead = 1.1 * (0.5 * oneHeadC + 0.5 * max(oneHeadC, bodyRectScaled.width))
+        let rBottom = myBounds.maxY + oneHead * 0.95
+        let rCenter = bodyRectScaled.midX + 0.5
+        let anotherRect = CGRect(
+            x: rCenter - oneHead * 0.5, y: rBottom - oneHead, width: oneHead, height: oneHead
+        )
         return MyFace(
             shapes: shapes,
             faceRect: faceRect,
@@ -389,6 +433,8 @@ public class MDProjectController {
             finalShapes: [
                 MyShape(points: finalRect.toPathPoints(), classification: .openPath),
                 MyShape(points: headRect.toPathPoints(), classification: .openPath),
+                //MyShape(points: bodyRectScaled.toPathPoints(), classification: .openPath),
+                MyShape(points: anotherRect.toPathPoints(), classification: .openPath),
             ]
         )
     }
