@@ -34,7 +34,7 @@ struct ProjectView: View {
                 let cgi = sdi.image,
                 let projectController = store.projectController,
                 let anns: ImageAnnotations = Optional.some(
-                    projectController.findAnnotations(cgImage: cgi)
+                    projectController.anns
                 )
             {
                 GeometryReader { geometry in
@@ -104,40 +104,6 @@ struct ProjectView: View {
             )
         } else {
             AnyView(Text("Failed to load image"))
-        }
-    }
-
-    func getZStackOld() -> some View {
-        if let sdi = store.selected(),
-            let cgi = sdi.image,
-            let projectController = store.projectController,
-            let assets = projectController.walkAssets(),
-            assets.count > 0
-        {
-            let path2 = "\(projectController.folderPath)/bg.png"
-            let cgi2 = cgImage(fromPath: path2)!
-            let path3 = "\(projectController.folderPath)/over1.png"
-            let cgi3 = cgImage(fromPath: path3)!
-            return AnyView(
-                ZStack {
-                    ForEach(assets) { (asset: MDProjectAsset) in
-                        Image(
-                            cgi,
-                            scale: CGFloat(asset.width / projectController.projectModel.baseWidth),
-                            label: Text("\(asset.id)")
-                        )
-                        .resizable()
-                        .frame(
-                            width: CGFloat(asset.width),
-                            height: CGFloat(asset.height),
-                            alignment: .topLeading
-                        )
-                        .offset(x: 0, y: 0)  // TODO use correct numbers
-                    }
-                }
-            )
-        } else {
-            return AnyView(Text("Failed to load image"))
         }
     }
 }

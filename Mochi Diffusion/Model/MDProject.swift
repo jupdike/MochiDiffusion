@@ -97,41 +97,11 @@ public class MDProjectController {
         return p2
     }
 
-    // attempt to deserialize and restore state from disk, if possible
-    // if not, create a new MDProject model object and write that out too
-    static func tryLoad(
-        fromProjectPath path: String,
-        withDefaultWidth w: Int,
-        defaultHeight h: Int
-    ) -> MDProject {
-        let projectModel = MDProject.read(path)
-        if let model = projectModel {
-            print("successfully read project.json from disk: \(path)")
-            return model
-        }
-        print("could not read project.json from disk @ '\(path)' so a new one was created")
-        // TODO also write out PNG image of root original image first
-        let asset = MDProjectAsset(
-            id: UUID(),
-            dx: 0,
-            dy: 0,
-            width: w,
-            height: h,
-            subImages: [])
-        let ret = MDProject(
-            baseWidth: w,
-            baseHeight: h,
-            rootImage: asset
-        )
-        ret.write(path)
-        return ret
-    }
-
     func testWith3(cgImage: CGImage) {
-        let _ = findAnnotations(cgImage: cgImage)
+        let _ = MDProjectController.findAnnotations(cgImage: cgImage)
     }
 
-    func tipOfNose(
+    static func tipOfNose(
         noseCrest: VNFaceLandmarkRegion2D?,
         median: VNFaceLandmarkRegion2D?,
         size: CGSize
@@ -171,7 +141,7 @@ public class MDProjectController {
         return CGPoint(x: cx, y: cy)
     }
 
-    func getBounds(
+    static func getBounds(
         contour contourRegion: VNFaceLandmarkRegion2D?,
         brow1 brow1Region: VNFaceLandmarkRegion2D?,
         brow2 brow2Region: VNFaceLandmarkRegion2D?,
@@ -219,7 +189,7 @@ public class MDProjectController {
         return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
     }
 
-    func findRadius(
+    static func findRadius(
         _ faceContourRegion: VNFaceLandmarkRegion2D?,
         size: CGSize,
         center: CGPoint
@@ -243,7 +213,7 @@ public class MDProjectController {
     }
 
     // maybe this is really just a torso finder?
-    func findBodyRects(cgImage: CGImage) -> CGRect? {
+    static func findBodyRects(cgImage: CGImage) -> CGRect? {
         let detectHumanRequest = VNDetectHumanRectanglesRequest()
         let handler = VNImageRequestHandler(cgImage: cgImage)
         do {
@@ -266,7 +236,7 @@ public class MDProjectController {
         return arr[0].boundingBox
     }
 
-    func findAnnotations(cgImage: CGImage) -> ImageAnnotations {
+    static func findAnnotations(cgImage: CGImage) -> ImageAnnotations {
         let emptyShapes: [MyShape] = []  // empty shape list for error situation
         let emptyAnn: ImageAnnotations = ImageAnnotations(
             shapes: emptyShapes,
@@ -589,7 +559,8 @@ public class MDProjectController {
 
     let baseWidth: Int
     let baseHeight: Int
-    var projectModel: MDProject
+    //var projectModel: MDProject
+    var anns: ImageAnnotations
 
     init(
         path: String,
@@ -606,27 +577,10 @@ public class MDProjectController {
         let folderPath = MDProjectController.imagePathToProjectFolder(path)
         self.folderPath = folderPath
         let path = "\(self.folderPath)/project.json"
-        self.projectModel = MDProjectController.tryLoad(
-            fromProjectPath: path,
-            withDefaultWidth: baseWidth,
-            defaultHeight: baseHeight
-        )
-        print("\(projectModel)")
+        self.anns = MDProjectController.findAnnotations(cgImage: cgImage)
         store.projectController = self
     }
 
-    func walkAssets() -> [MDProjectAsset]? {
-        var ret: [MDProjectAsset] = []
-        walkAssetsInner(self.projectModel.rootImage, &ret)
-        return ret
-    }
-
-    private func walkAssetsInner(_ asset: MDProjectAsset, _ ret: inout [MDProjectAsset]) {
-        ret.append(asset)
-        for sub in asset.subImages {
-            walkAssetsInner(sub, &ret)
-        }
-    }
 }
 
 struct MDProject: Hashable, Codable, CustomStringConvertible {
