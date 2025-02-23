@@ -427,23 +427,42 @@ public class MDProjectController {
         )
         let comboArea = comboRect.width * comboRect.height
         let imageArea = imageSize.width * imageSize.height
+        //let belowRect
+        let belowTop = 0.5 * anotherRect.midY + 0.5 * anotherRect.maxY
+        let belowRect = CGRect(
+            x: anotherRect.minX,
+            y: min(imageSize.height - 1 - anotherRect.height, belowTop),
+            width: anotherRect.width,
+            height: anotherRect.height
+        )
+        let overlapRect = belowRect.intersection(anotherRect)
+        let overlapRatio =
+            overlapRect.width * overlapRect.height / (anotherRect.width * anotherRect.height)
+        let bigBelowRect = CGRect(
+            x: anotherRect.midX - 0.5 * comboRect.width,
+            y: min(imageSize.height - 1 - comboRect.height, belowTop),
+            width: comboRect.width,
+            height: comboRect.height
+        )
+        let bigComboOverlap = bigBelowRect.intersection(comboRect)
+        let bigOverlapRatio = bigComboOverlap.width * bigComboOverlap.height / comboArea
         let bigEnough = !(comboArea > 0.9 * imageArea)
-        // TODO if bigEnough, also add some rectangles below anotherRect
-        let fShapes =
-            bigEnough
-            ? [
-                MyShape(points: comboRect.toPathPoints(), classification: .openPath),
-                MyShape(points: anotherRect.toPathPoints(), classification: .openPath),
-                MyShape(points: headRect.toPathPoints(), classification: .openPath),
-                MyShape(points: finalRect.toPathPoints(), classification: .openPath),
-                //MyShape(points: bodyRectScaled.toPathPoints(), classification: .openPath),
-            ]
-            : [
-                MyShape(points: anotherRect.toPathPoints(), classification: .openPath),
-                MyShape(points: headRect.toPathPoints(), classification: .openPath),
-                MyShape(points: finalRect.toPathPoints(), classification: .openPath),
-                //MyShape(points: bodyRectScaled.toPathPoints(), classification: .openPath),
-            ]
+        // if bigEnough, also add some rectangles below anotherRect
+        var fShapes: [MyShape] = []
+        if bigEnough {
+            if bigOverlapRatio < 0.4 {
+                fShapes.append(
+                    MyShape(points: bigBelowRect.toPathPoints(), classification: .openPath)
+                )
+            }
+            fShapes.append(MyShape(points: comboRect.toPathPoints(), classification: .openPath))
+        }
+        if bigEnough && overlapRatio < 0.7 {
+            fShapes.append(MyShape(points: belowRect.toPathPoints(), classification: .openPath))
+        }
+        fShapes.append(MyShape(points: anotherRect.toPathPoints(), classification: .openPath))
+        fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
+        fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
         return MyFace(
             shapes: shapes,
             faceRect: faceRect,
