@@ -93,7 +93,7 @@ struct ProjectView: View {
                         )
                     ForEach(face.finalShapes) { shape in
                         FaceLandmark(myShape: shape)
-                            .stroke(.white, lineWidth: lineWidth * 2)
+                            .stroke(.cyan, lineWidth: lineWidth * 2)
                             .frame(
                                 width: CGFloat(cgi.width),
                                 height: CGFloat(cgi.height),

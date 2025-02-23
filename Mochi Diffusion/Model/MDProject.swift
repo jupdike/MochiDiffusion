@@ -417,6 +417,33 @@ public class MDProjectController {
         let anotherRect = CGRect(
             x: rCenter - oneHead * 0.5, y: rTop, width: oneHead, height: oneHead
         )
+        let comboMidX = 0.5 * headRect.midX + 0.5 * anotherRect.midX
+        let comboHeight = anotherRect.maxY - headRect.minY
+        let comboRect = CGRect(
+            x: comboMidX - comboHeight * 0.5,
+            y: headRect.minY,
+            width: comboHeight,
+            height: comboHeight
+        )
+        let comboArea = comboRect.width * comboRect.height
+        let imageArea = imageSize.width * imageSize.height
+        let bigEnough = !(comboArea > 0.9 * imageArea)
+        // TODO if bigEnough, also add some rectangles below anotherRect
+        let fShapes =
+            bigEnough
+            ? [
+                MyShape(points: comboRect.toPathPoints(), classification: .openPath),
+                MyShape(points: anotherRect.toPathPoints(), classification: .openPath),
+                MyShape(points: headRect.toPathPoints(), classification: .openPath),
+                MyShape(points: finalRect.toPathPoints(), classification: .openPath),
+                //MyShape(points: bodyRectScaled.toPathPoints(), classification: .openPath),
+            ]
+            : [
+                MyShape(points: anotherRect.toPathPoints(), classification: .openPath),
+                MyShape(points: headRect.toPathPoints(), classification: .openPath),
+                MyShape(points: finalRect.toPathPoints(), classification: .openPath),
+                //MyShape(points: bodyRectScaled.toPathPoints(), classification: .openPath),
+            ]
         return MyFace(
             shapes: shapes,
             faceRect: faceRect,
@@ -431,12 +458,7 @@ public class MDProjectController {
                 classification: .openPath
             ),
             finalRect: finalRect,
-            finalShapes: [
-                MyShape(points: finalRect.toPathPoints(), classification: .openPath),
-                MyShape(points: headRect.toPathPoints(), classification: .openPath),
-                //MyShape(points: bodyRectScaled.toPathPoints(), classification: .openPath),
-                MyShape(points: anotherRect.toPathPoints(), classification: .openPath),
-            ]
+            finalShapes: fShapes
         )
     }
 
