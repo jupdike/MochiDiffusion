@@ -74,18 +74,24 @@ struct ImageCommands: Commands {
                     guard let sdi = store.selected() else { return }
                     guard let cgi = sdi.image else { return }
                     Task {
-                        store.projectController = MDProjectController(
-                            path: sdi.path,
-                            cgImage: cgi,
-                            store: store,
-                            controller: controller,
-                            generator: generator
-                        )
+                        if store.projectController == nil {
+                            store.projectController = MDProjectController(
+                                path: sdi.path,
+                                cgImage: cgi,
+                                store: store,
+                                controller: controller,
+                                generator: generator
+                            )
+                        } else {
+                            store.projectController = nil
+                        }
                     }
                 } label: {
                     Text(
-                        "Enter Project",
-                        comment: "Create or Edit Project using selected image as main image"
+                        store.projectController == nil ? "Enter Project" : "Close Projwct",
+                        comment: store.projectController == nil
+                            ? "Create or Edit Project using selected image as main image"
+                            : "Close project if open"
                     )
                 }
                 .keyboardShortcut("P", modifiers: .command)
