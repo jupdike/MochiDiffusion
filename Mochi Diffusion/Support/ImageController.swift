@@ -790,7 +790,7 @@ final class ImageController: ObservableObject {
         guidanceScale = sdi.guidanceScale
         width = sdi.width
         height = sdi.height
-        seed = sdi.seed
+        //seed = sdi.seed  // disabled for now. can always copy that manually
         scheduler = sdi.scheduler
     }
 

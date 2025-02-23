@@ -96,6 +96,19 @@ struct ImageCommands: Commands {
                 }
                 .keyboardShortcut("P", modifiers: .command)
                 .disabled(store.selected() == nil)
+            }
+            Section {
+                Button {
+                    ImageController.shared.copyToPrompt()
+                } label: {
+                    Text(
+                        "Copy Options to Sidebar",
+                        comment:
+                            "Button to copy the currently selected image's generation options to the prompt input sidebar"
+                    )
+                }
+                .keyboardShortcut("C", modifiers: [.command, .shift])
+                .disabled(store.selected() == nil)
                 Button {
                     guard let sdi = store.selected() else { return }
                     Task { await ImageController.shared.selectStartingImage(sdi: sdi) }
