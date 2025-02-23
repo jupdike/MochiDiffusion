@@ -279,18 +279,7 @@ public class MDProjectController {
             finalShapes: [MyShape.emptyShape()]
         )
         print("Got an image of size \(cgImage.width) x \(cgImage.height).")
-        guard let bodyRect = findBodyRects(cgImage: cgImage) else {
-            print("Expected an image of a human")
-            return emptyFace
-        }
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
-        let h = bodyRect.height * imageSize.height
-        let bodyRectScaled = CGRect(
-            x: bodyRect.origin.x * imageSize.width,
-            y: imageSize.height - 1 - bodyRect.origin.y * imageSize.height - h,
-            width: bodyRect.width * imageSize.width,
-            height: h
-        )
         let detectFacesRequest = VNDetectFaceRectanglesRequest()
         let handler = VNImageRequestHandler(cgImage: cgImage)
         do {
@@ -346,7 +335,8 @@ public class MDProjectController {
         let center: CGPoint = tipOfNose(
             noseCrest: landmarks[0].landmarks?.noseCrest,
             median: landmarks[0].landmarks?.medianLine,
-            size: imageSize)
+            size: imageSize
+        )
         let rectRad: CGFloat = findRadius(
             landmarks[0].landmarks?.faceContour,
             size: imageSize,
@@ -407,6 +397,21 @@ public class MDProjectController {
             width: hRad * 2,
             height: hRad * 2
         )
+        var bodyRectScaled: CGRect = CGRect(
+            x: headRect.minX,
+            y: headRect.minY,
+            width: headRect.width,
+            height: headRect.height * 2.0
+        )
+        if let bodyRect: CGRect = findBodyRects(cgImage: cgImage) {
+            let h = bodyRect.height * imageSize.height
+            bodyRectScaled = CGRect(
+                x: bodyRect.origin.x * imageSize.width,
+                y: imageSize.height - 1 - bodyRect.origin.y * imageSize.height - h,
+                width: bodyRect.width * imageSize.width,
+                height: h
+            )
+        }
         let oneHeadA = 1.2 * (0.5 * headRect.height + 0.5 * faceRect.height)
         let oneHeadB = 1.2 * (bodyRectScaled.maxY - faceRect.maxY)
         let oneHeadC = 0.5 * oneHeadA + 0.5 * oneHeadB
