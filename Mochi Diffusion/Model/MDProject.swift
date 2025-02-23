@@ -44,7 +44,7 @@ struct MyShape: Hashable, Equatable, Identifiable {
     }
 }
 
-struct MyFace: Hashable, Equatable, Identifiable {
+struct ImageAnnotations: Hashable, Equatable, Identifiable {
     let id: UUID = UUID()
     let shapes: [MyShape]
     let faceRect: CGRect
@@ -128,7 +128,7 @@ public class MDProjectController {
     }
 
     func testWith3(cgImage: CGImage) {
-        let _ = detectOneFace(cgImage: cgImage)
+        let _ = findAnnotations(cgImage: cgImage)
     }
 
     func tipOfNose(
@@ -266,9 +266,9 @@ public class MDProjectController {
         return arr[0].boundingBox
     }
 
-    func detectOneFace(cgImage: CGImage) -> MyFace {
+    func findAnnotations(cgImage: CGImage) -> ImageAnnotations {
         let emptyShapes: [MyShape] = []  // empty shape list for error situation
-        let emptyFace: MyFace = MyFace(
+        let emptyAnn: ImageAnnotations = ImageAnnotations(
             shapes: emptyShapes,
             faceRect: CGRect(),
             centerShape: MyShape.emptyShape(),
@@ -287,11 +287,11 @@ public class MDProjectController {
         } catch {
             print("Error performing face request")
             print(error)
-            return emptyFace
+            return emptyAnn
         }
         guard let arr: [VNFaceObservation] = detectFacesRequest.results else {
             print("Nil results for face request")
-            return emptyFace
+            return emptyAnn
         }
         print("Got \(arr.count) face results.")
         let qualityRequest = VNDetectFaceCaptureQualityRequest()
@@ -303,20 +303,20 @@ public class MDProjectController {
         } catch {
             print("Error performing face pair of requests")
             print(error)
-            return emptyFace
+            return emptyAnn
         }
         guard let quality = qualityRequest.results,
             let qScore = quality[0].faceCaptureQuality
         else {
             print("Nil quality")
-            return emptyFace
+            return emptyAnn
         }
         print("Quality score: \(qScore)")
         guard let landmarks = landmarksRequest.results,
             landmarks.count > 0
         else {
             print("Nil landmarks")
-            return emptyFace
+            return emptyAnn
         }
         let rect = landmarks[0].boundingBox
         print("Landmark bbox: \(rect.minX), \(rect.minY) to \(rect.maxX), \(rect.maxY)")
@@ -482,7 +482,7 @@ public class MDProjectController {
         fShapes.append(MyShape(points: anotherRect.toPathPoints(), classification: .openPath))
         fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
         fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
-        return MyFace(
+        return ImageAnnotations(
             shapes: shapes,
             faceRect: faceRect,
             centerShape: MyShape(

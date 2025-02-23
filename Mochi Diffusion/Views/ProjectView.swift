@@ -33,13 +33,13 @@ struct ProjectView: View {
             if let sdi = store.selected(),
                 let cgi = sdi.image,
                 let projectController = store.projectController,
-                let myFace: MyFace = Optional.some(
-                    projectController.detectOneFace(cgImage: cgi)
+                let anns: ImageAnnotations = Optional.some(
+                    projectController.findAnnotations(cgImage: cgi)
                 )
             {
                 GeometryReader { geometry in
                     let maxDim = min(geometry.size.height, geometry.size.width) * 0.95
-                    getZStack(myFace)
+                    getZStack(anns)
                         .frame(
                             width: geometry.frame(in: .global).width,
                             height: geometry.frame(in: .global).height
@@ -52,7 +52,7 @@ struct ProjectView: View {
         }
     }
 
-    func getZStack(_ face: MyFace) -> some View {
+    func getZStack(_ anns: ImageAnnotations) -> some View {
         if let sdi = store.selected(),
             let cgi = sdi.image,
             let lineWidth = Optional.some(
@@ -68,7 +68,7 @@ struct ProjectView: View {
                             height: CGFloat(cgi.height),
                             alignment: .topLeading
                         )
-                    ForEach(face.shapes) { shape in
+                    ForEach(anns.shapes) { shape in
                         FaceLandmark(myShape: shape)
                             .stroke(.orange, lineWidth: lineWidth)
                             .frame(
@@ -77,21 +77,21 @@ struct ProjectView: View {
                                 alignment: .topLeading
                             )
                     }
-                    FaceLandmark(myShape: face.boundsShape)
+                    FaceLandmark(myShape: anns.boundsShape)
                         .stroke(.red, lineWidth: lineWidth)
                         .frame(
                             width: CGFloat(cgi.width),
                             height: CGFloat(cgi.height),
                             alignment: .topLeading
                         )
-                    FaceLandmark(myShape: face.centerShape)
+                    FaceLandmark(myShape: anns.centerShape)
                         .stroke(.yellow, lineWidth: lineWidth)
                         .frame(
                             width: CGFloat(cgi.width),
                             height: CGFloat(cgi.height),
                             alignment: .topLeading
                         )
-                    ForEach(face.finalShapes) { shape in
+                    ForEach(anns.finalShapes) { shape in
                         FaceLandmark(myShape: shape)
                             .stroke(.cyan, lineWidth: lineWidth * 2)
                             .frame(
