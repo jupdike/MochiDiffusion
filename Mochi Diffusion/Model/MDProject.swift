@@ -367,7 +367,8 @@ public class MDProjectController {
         let hRad = r + noseToChin
         let headRect = CGRect(
             x: cx2 - hRad,
-            y: max(0, cy2 - hRad + dy - hRad * 0.4),
+            // don't let head rect stick out from face rect
+            y: max(0, max(finalRect.maxY - hRad * 2, cy2 - hRad + dy - hRad * 0.4)),
             width: hRad * 2,
             height: hRad * 2
         )
