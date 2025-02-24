@@ -40,6 +40,29 @@ extension View {
     }
 }
 
+extension String {
+    func loadPngImage() -> CGImage? {
+        let url = URL(filePath: self)
+        guard let dataProvider = CGDataProvider(url: url as CFURL) else {
+            print("Failed to create data provider.")
+            return nil
+        }
+        guard
+            let cgImage =
+                CGImage(
+                    pngDataProviderSource: dataProvider,
+                    decode: nil,
+                    shouldInterpolate: true,
+                    intent: .defaultIntent
+                )
+        else {
+            print("Failed to create CGImage.")
+            return nil
+        }
+        return cgImage
+    }
+}
+
 extension NSImage {
     func getImageHash() -> Int {
         self.tiffRepresentation!.hashValue

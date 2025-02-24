@@ -56,13 +56,15 @@ struct ProjectToolbar: View {
                 print("path to selected image: \(sdi.path)")
                 // project should be created when Enter Project command is executed on a selected image in store
                 if let project = store.projectController {
-                    project.testWith3(cgImage: cgi)
+                    // actually execute the crop/scale -> generate -> stitch/scale/export-PSD pipeline
+                    // all in one click!
+                    project.actuallyExecutePlan()
                 } else {
                     print("store somehow does not have a project")
                 }
             } label: {
                 Text(
-                    "Test",
+                    "Execute",
                     comment: "A Button for Testing MDProject functionality"
                 )
             }

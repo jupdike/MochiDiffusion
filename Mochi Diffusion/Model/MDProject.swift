@@ -187,8 +187,9 @@ public enum AssetStage {
 class AssetCollection {
     public var baseImage: CGImage? { assets.count > 0 ? assets[0].image : nil }
 
-    init(assets: [SSAsset]) {
+    init(assets: [SSAsset], folderPath: String) {
         self.assets = assets
+        self.folderPath = folderPath
     }
 
     private func computeMaxScale() -> Double {
@@ -202,6 +203,8 @@ class AssetCollection {
 
     public var assets: [SSAsset] = []
     var scaleCache: [Int: Double] = [:]
+
+    public var folderPath: String
 
     // cache Max Scale for a given set of unique UUIDs
     public func getMaxScale() -> Double {
@@ -402,11 +405,11 @@ class AssetCollection {
             return nil
         }
         currentMessage = "Upscaled"
-        let tmpFolder = NSTemporaryDirectory()
-        let out = "\(tmpFolder)IMG.png"
-        let outputUrl = URL(fileURLWithPath: out)
-        let _ = await AssetCollection.writeToUrl(img: cgiUpscaled, toUrl: outputUrl)
-        currentMessage = "Exported"
+        //let tmpFolder = NSTemporaryDirectory()
+        //let out = "\(tmpFolder)IMG.png"
+        //let outputUrl = URL(fileURLWithPath: out)
+        //let _ = await AssetCollection.writeToUrl(img: cgiUpscaled, toUrl: outputUrl)
+        //currentMessage = "Exported"
         return upped
     }
 
@@ -435,13 +438,45 @@ class AssetCollection {
         )
     }
 
+    func doGenerate(image: CGImage) async -> CGImage? {
+        let controller = await ImageController.shared
+        //await logMessage("Setting Starting Image...")
+        await controller.setStartingImage(image: image)
+        //await logMessage("Generating an image...")
+        let uuid = UUID()
+        await controller.generate1(folderPath, "\(uuid)")
+        // await logMessage("Done.")
+        // load the image and return it so it can possibly be used as input
+        let ret = "\(folderPath)/\(uuid).png".loadPngImage()
+        return ret
+    }
+
+    func generateFromAssetItself(_ asset: SSAsset) async -> SSAsset {
+        guard let image = asset.image else {
+            print("Cannot generate with nil image")
+            return asset  // eek, nothing to do? could cause an infinite loop
+        }
+        let maybeCgi = await doGenerate(image: image)
+        return SSAsset(
+            image: maybeCgi,
+            result: asset.result,
+            rectToBase: nil,
+            parentId: asset.parentId,
+            stage: .generatedNotUpscaled3,
+            id: asset.id
+        )
+    }
+
     // now time to get cropScaled
     // (one at a time because other ones depend on a parent being generated first)
-    func cropScaleOne() async -> SSAsset? {
+    func processOne() async -> SSAsset? {
         guard let input = assets.filter({ $0.stage == .needsCrop1 }).first else {
             return nil
         }
-        let newAsset = await cropScaleParent(input)
+        var newAsset = await cropScaleParent(input)
+        if let image = newAsset.image {
+            newAsset = await generateFromAssetItself(newAsset)
+        }
         return newAsset
     }
 
@@ -457,7 +492,7 @@ class AssetCollection {
 
     func stage1to2() async {
         while true {
-            if let oneChanged = await cropScaleOne() {
+            if let oneChanged = await processOne() {
                 // replace in-place over and over, to make sure we can use previous images
                 assets = assetReplacing(oneChanged.id, oneChanged)
             } else {
@@ -1008,11 +1043,14 @@ public class MDProjectController {
         self.folderPath = folderPath
         //let path = "\(self.folderPath)/project.json"
         self.anns = MDProjectController.findAnnotations(cgImage: cgImage)
-        self.assets = AssetCollection(assets: self.anns.assets)
+        self.assets = AssetCollection(assets: self.anns.assets, folderPath: folderPath)
         self.assets.assets = self.assets.stage0to1()
         store.projectController = self
+    }
+
+    func actuallyExecutePlan() {
         Task {
-            let listOf = await self.assets.stage1to2()
+            await self.assets.stage1to2()
         }
     }
 
