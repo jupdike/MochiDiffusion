@@ -40,7 +40,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
     let boundsShape: MyShape
     let finalRect: CGRect
     let finalShapes: [MyShape]
-    let assets: [SSAsset]
+    let assets: [ProjectAsset]
 
     static func tipOfNose(
         noseCrest: VNFaceLandmarkRegion2D?,
@@ -377,8 +377,8 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             extraOverlapRect.width * extraOverlapRect.height / (belowRect.width * belowRect.height)
         // now gather up relevant rectangles
         var fShapes: [MyShape] = []
-        var assets: [SSAsset] = []
-        let baseAsset = SSAsset(image: cgImage)
+        var assets: [ProjectAsset] = []
+        let baseAsset = ProjectAsset(image: cgImage)
         assets.append(baseAsset)
         var comboOrFull = baseAsset
         var belowOrFull = baseAsset
@@ -387,29 +387,29 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 fShapes.append(
                     MyShape(points: bigBelowRect.toPathPoints(), classification: .openPath)
                 )
-                assets.append(SSAsset(rectToBase: bigBelowRect, parent: baseAsset))
+                assets.append(ProjectAsset(rectToBase: bigBelowRect, parent: baseAsset))
             }
             fShapes.append(MyShape(points: comboRect.toPathPoints(), classification: .openPath))
-            comboOrFull = SSAsset(rectToBase: comboRect, parent: baseAsset)
+            comboOrFull = ProjectAsset(rectToBase: comboRect, parent: baseAsset)
             assets.append(comboOrFull)
             if extraOverlapRatio < 0.5 {
                 fShapes.append(MyShape(points: extraRect.toPathPoints(), classification: .openPath))
-                let bigBelow = SSAsset(rectToBase: extraRect, parent: baseAsset)
+                let bigBelow = ProjectAsset(rectToBase: extraRect, parent: baseAsset)
                 assets.append(bigBelow)
                 belowOrFull = bigBelow
             }
         }
         if bigEnough && overlapRatio < 0.7 {
             fShapes.append(MyShape(points: belowRect.toPathPoints(), classification: .openPath))
-            assets.append(SSAsset(rectToBase: belowRect, parent: belowOrFull))
+            assets.append(ProjectAsset(rectToBase: belowRect, parent: belowOrFull))
         }
         fShapes.append(MyShape(points: anotherRect.toPathPoints(), classification: .openPath))
-        assets.append(SSAsset(rectToBase: anotherRect, parent: comboOrFull))
+        assets.append(ProjectAsset(rectToBase: anotherRect, parent: comboOrFull))
         fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
-        let head = SSAsset(rectToBase: headRect, parent: comboOrFull)
+        let head = ProjectAsset(rectToBase: headRect, parent: comboOrFull)
         assets.append(head)
         fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
-        assets.append(SSAsset(rectToBase: finalRect, parent: head))
+        assets.append(ProjectAsset(rectToBase: finalRect, parent: head))
         return ImageAnnotations(
             shapes: shapes,
             faceRect: faceRect,

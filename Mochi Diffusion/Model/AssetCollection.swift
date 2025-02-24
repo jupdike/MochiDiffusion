@@ -14,7 +14,7 @@ struct Register: Identifiable, Equatable, Hashable {
     let id: UUID = UUID()
 }
 
-public struct SSAsset: Identifiable, Equatable, Hashable {
+public struct ProjectAsset: Identifiable, Equatable, Hashable {
     var result: Register?
     // needs to be converted to result relative to parent, not relative to base
     var rectToBase: CGRect?
@@ -50,11 +50,11 @@ public struct SSAsset: Identifiable, Equatable, Hashable {
         }
     }
 
-    init(rectToBase: CGRect, parent: SSAsset) {
+    init(rectToBase: CGRect, parent: ProjectAsset) {
         self.init(image: nil, result: nil, rectToBase: rectToBase, parentId: parent.id)
     }
 
-    static func getNodeById(assets: [SSAsset], id: UUID) -> SSAsset? {
+    static func getNodeById(assets: [ProjectAsset], id: UUID) -> ProjectAsset? {
         return assets.first { $0.id == id }
     }
 
@@ -72,7 +72,7 @@ public struct SSAsset: Identifiable, Equatable, Hashable {
     }
 
     // in old baseImage coord space, not new scaled (maxScale) space
-    func getOffsetRelativeToBase(assets: [SSAsset]) -> CGPoint {
+    func getOffsetRelativeToBase(assets: [ProjectAsset]) -> CGPoint {
         if self.isBaseImage {
             return CGPoint(x: 0, y: 0)
         }
@@ -86,7 +86,7 @@ public struct SSAsset: Identifiable, Equatable, Hashable {
             return CGPoint(x: -1337, y: -1337)
         }
         // makes multiple calls to this O(n^2) which is OK for low values of n
-        guard let parent = SSAsset.getNodeById(assets: assets, id: pid) else {
+        guard let parent = ProjectAsset.getNodeById(assets: assets, id: pid) else {
             print("Expected node to not be nil, this should not happen")
             return CGPoint(x: -1337, y: -1337)
         }
@@ -102,7 +102,7 @@ public struct SSAsset: Identifiable, Equatable, Hashable {
 
     // this is O(n) so the ForEach call is O(n^2) which should not be a problem for under a dozen images, or even higher
     // really, you shouldn't go for like hundreds of images, as this is untested :sucking air through teeth emoji:
-    func getScaleRelativeToBase(assets: [SSAsset]) -> Double {
+    func getScaleRelativeToBase(assets: [ProjectAsset]) -> Double {
         var node = self
         var scale = 1.0
         while !node.isBaseImage {
@@ -112,7 +112,7 @@ public struct SSAsset: Identifiable, Equatable, Hashable {
             }
             scale *= register.scale
             if let pid = node.parentId,
-                let parent = SSAsset.getNodeById(assets: assets, id: pid)
+                let parent = ProjectAsset.getNodeById(assets: assets, id: pid)
             {
                 node = parent
             } else {
@@ -135,7 +135,7 @@ public enum AssetStage {
 class AssetCollection {
     public var baseImage: CGImage? { assets.count > 0 ? assets[0].image : nil }
 
-    init(assets: [SSAsset], folderPath: String) {
+    init(assets: [ProjectAsset], folderPath: String) {
         self.assets = assets
         self.folderPath = folderPath
     }
@@ -149,7 +149,7 @@ class AssetCollection {
         return maxScale
     }
 
-    public var assets: [SSAsset] = []
+    public var assets: [ProjectAsset] = []
     var scaleCache: [Int: Double] = [:]
 
     public var folderPath: String
@@ -165,7 +165,7 @@ class AssetCollection {
         return result
     }
 
-    public func getOffsetRelativeToParent(asset: SSAsset) -> CGPoint {
+    public func getOffsetRelativeToParent(asset: ProjectAsset) -> CGPoint {
         if asset.isBaseImage {
             return CGPoint(x: 0, y: 0)
         }
@@ -173,7 +173,7 @@ class AssetCollection {
             print("Assets besides baseImage should have a parentId!")
             return CGPoint(x: -1337, y: -1337)
         }
-        guard let parent = SSAsset.getNodeById(assets: assets, id: pid) else {
+        guard let parent = ProjectAsset.getNodeById(assets: assets, id: pid) else {
             print("Assets besides baseImage should have a parent!")
             return CGPoint(x: -1337, y: -1337)
         }
@@ -194,7 +194,7 @@ class AssetCollection {
         )
     }
 
-    public func getScaleRelativeToParent(asset: SSAsset) -> CGFloat {
+    public func getScaleRelativeToParent(asset: ProjectAsset) -> CGFloat {
         if asset.isBaseImage {
             return 1.0
         }
@@ -202,7 +202,7 @@ class AssetCollection {
             print("Assets besides baseImage should have a parentId!")
             return -1337.0
         }
-        guard let parent = SSAsset.getNodeById(assets: assets, id: pid) else {
+        guard let parent = ProjectAsset.getNodeById(assets: assets, id: pid) else {
             print("Assets besides baseImage should have a parent!")
             return -1337.0
         }
@@ -218,14 +218,14 @@ class AssetCollection {
         return scale
     }
 
-    public func getTrueScale(asset: SSAsset) -> Double {
+    public func getTrueScale(asset: ProjectAsset) -> Double {
         let max = getMaxScale()
         let scale = asset.getScaleRelativeToBase(assets: assets)
         // returns 1.0 for smallest image, and maxScale for biggest (base) image
         return max * scale
     }
 
-    public func getTrueSize(asset: SSAsset) -> CGSize {
+    public func getTrueSize(asset: ProjectAsset) -> CGSize {
         guard let image = asset.image else {
             print("getTrueSize expected asset.image != nil")
             return CGSize(width: -1, height: -1)
@@ -244,7 +244,7 @@ class AssetCollection {
         return hasher.finalize()
     }
 
-    func verifyParentage(_ asset: SSAsset) -> Bool {
+    func verifyParentage(_ asset: ProjectAsset) -> Bool {
         var node = asset
         if node.isBaseImage {
             //print("isBaseImage: \(node.id)")
@@ -254,7 +254,7 @@ class AssetCollection {
                 print("Assets besides baseImage should have a parentId!")
                 return false
             }
-            guard let n = SSAsset.getNodeById(assets: assets, id: pid) else {
+            guard let n = ProjectAsset.getNodeById(assets: assets, id: pid) else {
                 return false
             }
             //print("\(node.id) -- parent is --> \(n.id)")
@@ -263,7 +263,7 @@ class AssetCollection {
         return true
     }
 
-    func rectToParentResult(asset: SSAsset) -> SSAsset {
+    func rectToParentResult(asset: ProjectAsset) -> ProjectAsset {
         //getTrueScale(asset: asset) // TODO this is wrong because it needs to be relative to parent!
         let scale = getScaleRelativeToParent(asset: asset)
         let offset = getOffsetRelativeToParent(asset: asset)
@@ -277,7 +277,7 @@ class AssetCollection {
             nw: nw, nh: nh
         )
         print("\(asset.id) -- offset: \(reg.offsetX), \(reg.offsetY) -- nw x nh: \(nw) x \(nh)")
-        return SSAsset(
+        return ProjectAsset(
             image: nil,
             result: reg,
             parentId: asset.parentId,
@@ -286,8 +286,8 @@ class AssetCollection {
         )
     }
 
-    func stage0to1() -> [SSAsset] {
-        var newAssets: [SSAsset] = []
+    func stage0to1() -> [ProjectAsset] {
+        var newAssets: [ProjectAsset] = []
         for asset in assets {
             //print("----\nVerifying parentage")
             if !verifyParentage(asset) {
@@ -306,12 +306,12 @@ class AssetCollection {
 
     var currentMessage: String = ""
 
-    private func doCropScaleExport(asset: SSAsset) async -> CGImage? {
+    private func doCropScaleExport(asset: ProjectAsset) async -> CGImage? {
         guard let pid = asset.parentId else {
             print("Should not happen: parentId")
             return nil
         }
-        guard let parent = SSAsset.getNodeById(assets: assets, id: pid) else {
+        guard let parent = ProjectAsset.getNodeById(assets: assets, id: pid) else {
             print("Should not happen: parent is nil")
             return nil
         }
@@ -374,9 +374,9 @@ class AssetCollection {
         return nil
     }
 
-    func cropScaleParent(_ asset: SSAsset) async -> SSAsset {
+    func cropScaleParent(_ asset: ProjectAsset) async -> ProjectAsset {
         let maybeCgi = await doCropScaleExport(asset: asset)
-        return SSAsset(
+        return ProjectAsset(
             image: maybeCgi,
             result: asset.result,
             rectToBase: nil,
@@ -399,13 +399,13 @@ class AssetCollection {
         return ret
     }
 
-    func generateFromAssetItself(_ asset: SSAsset) async -> SSAsset {
+    func generateFromAssetItself(_ asset: ProjectAsset) async -> ProjectAsset {
         guard let image = asset.image else {
             print("Cannot generate with nil image")
             return asset  // eek, nothing to do? could cause an infinite loop
         }
         let maybeCgi = await doGenerate(image: image)
-        return SSAsset(
+        return ProjectAsset(
             image: maybeCgi,
             result: asset.result,
             rectToBase: nil,
@@ -417,7 +417,7 @@ class AssetCollection {
 
     // now time to get cropScaled
     // (one at a time because other ones depend on a parent being generated first)
-    func processOne() async -> SSAsset? {
+    func processOne() async -> ProjectAsset? {
         guard let input = assets.filter({ $0.stage == .needsCrop1 }).first else {
             return nil
         }
@@ -428,7 +428,7 @@ class AssetCollection {
         return newAsset
     }
 
-    func assetReplacing(_ id: UUID, _ newAsset: SSAsset) -> [SSAsset] {
+    func assetReplacing(_ id: UUID, _ newAsset: ProjectAsset) -> [ProjectAsset] {
         return assets.map {
             if $0.id == id {
                 return newAsset
