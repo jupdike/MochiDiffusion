@@ -30,9 +30,7 @@ struct ProjectView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if let sdi = store.selected(),
-                let cgi = sdi.image,
-                let projectController = store.projectController,
+            if let projectController = store.projectController,
                 let anns: ImageAnnotations = Optional.some(
                     projectController.anns
                 )

@@ -135,9 +135,13 @@ public enum AssetStage {
 class AssetCollection {
     public var baseImage: CGImage? { assets.count > 0 ? assets[0].image : nil }
 
-    init(assets: [ProjectAsset], folderPath: String) {
+    init(assets: [ProjectAsset], folderPath: String, store: ImageStore) {
         self.assets = assets
         self.folderPath = folderPath
+        // keep a reference to store which can have a nullable
+        // reference to projectController, which is what we
+        // really care about
+        self.store = store
     }
 
     private func computeMaxScale() -> Double {
@@ -152,7 +156,9 @@ class AssetCollection {
     public var assets: [ProjectAsset] = []
     var scaleCache: [Int: Double] = [:]
 
-    public var folderPath: String
+    public let folderPath: String
+    public let store: ImageStore
+    public var projectController: MDProjectController? { store.projectController }
 
     // cache Max Scale for a given set of unique UUIDs
     public func getMaxScale() -> Double {
@@ -304,8 +310,6 @@ class AssetCollection {
         return newAssets
     }
 
-    var currentMessage: String = ""
-
     private func doCropScaleExport(asset: ProjectAsset) async -> CGImage? {
         guard let pid = asset.parentId else {
             print("Should not happen: parentId")
@@ -324,7 +328,6 @@ class AssetCollection {
             print("Failed to get non-nil crop of input image")
             return nil
         }
-        currentMessage = "new size of image = \(cropImg.width) by \(cropImg.height)"
         let cgi = await cropScaleExportPhase2(
             cropImg,
             origWidth: image.width,
@@ -342,7 +345,7 @@ class AssetCollection {
         print("Upscale me to \(w) x \(h)")
         print("Starting upscale ...")
         let s = CGFloat(w) / CGFloat(cropImg.width)
-        currentMessage = "Upscaling (\(String(format: "%1.2f", s))x)..."
+        await logMessage("(\(i)/\(n)) Upscaling (\(String(format: "%1.2f", s))x)")
         let upped = await Upscaler.shared.upscale(
             cgImage: cropImg,
             upscaledWidth: w,
@@ -352,7 +355,7 @@ class AssetCollection {
             print("Failed to upscale cropped image")
             return nil
         }
-        currentMessage = "Upscaled"
+        //currentMessage = "Upscaled"
         //let tmpFolder = NSTemporaryDirectory()
         //let out = "\(tmpFolder)IMG.png"
         //let outputUrl = URL(fileURLWithPath: out)
@@ -386,14 +389,17 @@ class AssetCollection {
         )
     }
 
+    func logMessage(_ message: String) async {
+        guard let controller = self.projectController else { return }
+        await controller.logMessage(message)
+    }
+
     func doGenerate(image: CGImage) async -> CGImage? {
         let controller = await ImageController.shared
-        //await logMessage("Setting Starting Image...")
         await controller.setStartingImage(image: image)
-        //await logMessage("Generating an image...")
+        await logMessage("(\(i)/\(n)) Img2img")
         let uuid = UUID()
         await controller.generate1(folderPath, "\(uuid)")
-        // await logMessage("Done.")
         // load the image and return it so it can possibly be used as input
         let ret = "\(folderPath)/\(uuid).png".loadPngImage()
         return ret
@@ -422,7 +428,7 @@ class AssetCollection {
             return nil
         }
         var newAsset = await cropScaleParent(input)
-        if let image = newAsset.image {
+        if newAsset.image != nil {
             newAsset = await generateFromAssetItself(newAsset)
         }
         return newAsset
@@ -438,11 +444,18 @@ class AssetCollection {
         }
     }
 
+    var n = 1
+    var i = 1
     func stage1to2() async {
+        n = assets.count
+        // baseImage is already ... based!
+        i = 2
         while true {
             if let oneChanged = await processOne() {
                 // replace in-place over and over, to make sure we can use previous images
                 assets = assetReplacing(oneChanged.id, oneChanged)
+                await logMessage("(\(i)/\(n)) Done")
+                i += 1
             } else {
                 break
             }
