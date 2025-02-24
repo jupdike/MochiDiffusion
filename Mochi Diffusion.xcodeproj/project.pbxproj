@@ -61,6 +61,8 @@
 		948853A52A543CB200B4AD86 /* GalleryPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948853A42A543CB200B4AD86 /* GalleryPreviewView.swift */; };
 		9B7392C3298DEAC2006F03D5 /* Tokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */; };
 		A30AFDDB2D6A241800FBF5E2 /* UIShapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30AFDDA2D6A241100FBF5E2 /* UIShapes.swift */; };
+		A3709C752D6CF3AE002A7B3F /* ImageAnnotations.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3709C742D6CF3A9002A7B3F /* ImageAnnotations.swift */; };
+		A3709C772D6CF437002A7B3F /* AssetCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3709C762D6CF434002A7B3F /* AssetCollection.swift */; };
 		A38C74E42D00EA2D00E99689 /* ProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A38C74E32D00EA2700E99689 /* ProjectView.swift */; };
 		A39D86892D1DAB9C00D17829 /* PSDWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = A39D86862D1DAB9C00D17829 /* PSDWriter.m */; };
 		A39D868A2D1DAB9C00D17829 /* PSDLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = A39D86842D1DAB9C00D17829 /* PSDLayer.m */; };
@@ -145,6 +147,8 @@
 		948853A42A543CB200B4AD86 /* GalleryPreviewView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GalleryPreviewView.swift; sourceTree = "<group>"; };
 		9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tokenizer.swift; sourceTree = "<group>"; };
 		A30AFDDA2D6A241100FBF5E2 /* UIShapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIShapes.swift; sourceTree = "<group>"; };
+		A3709C742D6CF3A9002A7B3F /* ImageAnnotations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnnotations.swift; sourceTree = "<group>"; };
+		A3709C762D6CF434002A7B3F /* AssetCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetCollection.swift; sourceTree = "<group>"; };
 		A38C74E32D00EA2700E99689 /* ProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectView.swift; sourceTree = "<group>"; };
 		A39D86812D1DAB9C00D17829 /* NSDataPSDAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSDataPSDAdditions.h; sourceTree = "<group>"; };
 		A39D86822D1DAB9C00D17829 /* NSDataPSDAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NSDataPSDAdditions.m; sourceTree = "<group>"; };
@@ -206,6 +210,7 @@
 				03061E6129AB9C06009AA2A2 /* FocusController.swift */,
 				C1ADEC2B2B16957800E142CA /* FolderMonitor.swift */,
 				0352E2B4294EA887003FBF25 /* Functions.swift */,
+				A3709C742D6CF3A9002A7B3F /* ImageAnnotations.swift */,
 				03173C142999F5C700B03456 /* ImageController.swift */,
 				03173C102999D83600B03456 /* ImageGenerator.swift */,
 				9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */,
@@ -303,9 +308,10 @@
 		0386DF8E29510D8700CA4CEB /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */,
+				A3709C762D6CF434002A7B3F /* AssetCollection.swift */,
 				03173C17299B3C1300B03456 /* ImageStore.swift */,
 				0311C69829899A660074BCAE /* Metadata.swift */,
+				A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */,
 				0395B3102995C70400465B73 /* Scheduler.swift */,
 				030370302A2BECDD003D2F0C /* SDControlNet.swift */,
 				03E89F3B294FE6ED0067457E /* SDImage.swift */,
@@ -496,6 +502,7 @@
 				035EDFF3295A1FBF00080D18 /* NumberOfImagesView.swift in Sources */,
 				0386DF8D2950F25500CA4CEB /* GalleryToolbarView.swift in Sources */,
 				035E76F42970E79A008DDFDE /* CVPixelBuffer+Resize.swift in Sources */,
+				A3709C752D6CF3AE002A7B3F /* ImageAnnotations.swift in Sources */,
 				0352E2A7294E3148003FBF25 /* HelpCommands.swift in Sources */,
 				03B1ACA8295167B900302F54 /* SettingsView.swift in Sources */,
 				03173C18299B3C1300B03456 /* ImageStore.swift in Sources */,
@@ -507,6 +514,7 @@
 				0386DF8B2950D29400CA4CEB /* InspectorView.swift in Sources */,
 				948853A52A543CB200B4AD86 /* GalleryPreviewView.swift in Sources */,
 				9401BC6F2CB9E9E100F00DDE /* Filter.swift in Sources */,
+				A3709C772D6CF437002A7B3F /* AssetCollection.swift in Sources */,
 				030370312A2BECDD003D2F0C /* SDControlNet.swift in Sources */,
 				0373FF5429A9165600C0180F /* AppCommands.swift in Sources */,
 				9485F21C2CB97B53002623B7 /* FilterTextFieldView.swift in Sources */,
