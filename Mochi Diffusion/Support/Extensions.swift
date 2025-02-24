@@ -160,6 +160,40 @@ extension CGImage {
     }
 }
 
+// https://stackoverflow.com/questions/29262624/nsimage-to-nsdata-as-png-swift
+// https://stackoverflow.com/questions/46432709/saving-nsimage-in-different-formats-locally/46481947#46481947
+extension NSBitmapImageRep {
+    var png: Data? { representation(using: .png, properties: [:]) }
+}
+
+extension Data {
+    var bitmap: NSBitmapImageRep? { NSBitmapImageRep(data: self) }
+}
+
+extension NSImage {
+    func cgImage() -> CGImage? {
+        guard let tiffData = self.tiffRepresentation,
+            let bitmapImage = NSBitmapImageRep(data: tiffData)
+        else {
+            return nil
+        }
+        return bitmapImage.cgImage
+    }
+}
+
+extension CGImage {
+    func trySaveToPng(_ imageURL: URL) -> Bool {
+        let ns = NSImage(
+            cgImage: self,
+            size: NSSize(width: self.width, height: self.height)
+        )
+        if ns.trySaveTo(imageURL) {
+            return true
+        }
+        return false
+    }
+}
+
 extension CGRect {
     var topLeft: CGPoint { self.origin }
     var topRight: CGPoint { CGPoint(x: self.maxX, y: self.minY) }
@@ -177,15 +211,6 @@ extension CGRect {
             self.topLeft,
         ]
     }
-}
-
-// https://stackoverflow.com/questions/29262624/nsimage-to-nsdata-as-png-swift
-// https://stackoverflow.com/questions/46432709/saving-nsimage-in-different-formats-locally/46481947#46481947
-extension NSBitmapImageRep {
-    var png: Data? { representation(using: .png, properties: [:]) }
-}
-extension Data {
-    var bitmap: NSBitmapImageRep? { NSBitmapImageRep(data: self) }
 }
 
 extension Text {

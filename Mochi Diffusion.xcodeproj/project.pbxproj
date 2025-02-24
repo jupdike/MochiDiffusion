@@ -68,6 +68,7 @@
 		A39D868E2D1DABF200D17829 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A39D868D2D1DABF200D17829 /* AppKit.framework */; };
 		A39D86902D1DAC0A00D17829 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A39D868F2D1DAC0A00D17829 /* CoreGraphics.framework */; };
 		A3B7736F2D02B68A00C91D60 /* ProjectToolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B7736E2D02B68300C91D60 /* ProjectToolbar.swift */; };
+		A3B81C592D6BDDE7000E7FE2 /* Autosave.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3B81C582D6BDDE7000E7FE2 /* Autosave.swift */; };
 		A3BFF4B42D1860F100D8C9DC /* MDProject.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */; };
 		C116D4952AFC382E00314FE3 /* MochiSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C116D4942AFC382E00314FE3 /* MochiSlider.swift */; };
 		C11A03882B099D9600540F7F /* JobQueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C11A03872B099D9600540F7F /* JobQueueView.swift */; };
@@ -156,6 +157,7 @@
 		A39D868F2D1DAC0A00D17829 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		A39D86912D1DBDBF00D17829 /* MD-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MD-Bridging-Header.h"; sourceTree = "<group>"; };
 		A3B7736E2D02B68300C91D60 /* ProjectToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectToolbar.swift; sourceTree = "<group>"; };
+		A3B81C582D6BDDE7000E7FE2 /* Autosave.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Autosave.swift; sourceTree = "<group>"; };
 		A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDProject.swift; sourceTree = "<group>"; };
 		C116D4942AFC382E00314FE3 /* MochiSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MochiSlider.swift; sourceTree = "<group>"; };
 		C11A03872B099D9600540F7F /* JobQueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobQueueView.swift; sourceTree = "<group>"; };
@@ -196,6 +198,7 @@
 		0352E2AF294EA2F3003FBF25 /* Support */ = {
 			isa = PBXGroup;
 			children = (
+				A3B81C582D6BDDE7000E7FE2 /* Autosave.swift */,
 				A30AFDDA2D6A241100FBF5E2 /* UIShapes.swift */,
 				035E76F52970E809008DDFDE /* CVPixelBuffer+Create.swift */,
 				035E76F32970E79A008DDFDE /* CVPixelBuffer+Resize.swift */,
@@ -507,6 +510,7 @@
 				030370312A2BECDD003D2F0C /* SDControlNet.swift in Sources */,
 				0373FF5429A9165600C0180F /* AppCommands.swift in Sources */,
 				9485F21C2CB97B53002623B7 /* FilterTextFieldView.swift in Sources */,
+				A3B81C592D6BDDE7000E7FE2 /* Autosave.swift in Sources */,
 				03D280F2294FD60E00C7D184 /* PromptView.swift in Sources */,
 				03FD2319295F74B6006EEEE2 /* RealESRGAN.mlmodel in Sources */,
 				035EE000295A224900080D18 /* ModelView.swift in Sources */,
