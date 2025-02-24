@@ -236,9 +236,7 @@ class AssetCollection {
             print("Expected own rect to be non-null while converting rect to result")
             return CGPoint(x: -1337, y: -1337)
         }
-        //let parentOffset = getTrueOffsetRelativeToParent(asset: parent)
-        //let parentOriginToGrand = parentRectToBase.origin
-        let scale = getScaleRelativeToParent(asset: asset)
+        //let scale = getScaleRelativeToParent(asset: asset)
         return CGPoint(
             x: (orig.x - pOrigin.x) / pScale,
             y: (orig.y - pOrigin.y) / pScale
@@ -428,35 +426,44 @@ class AssetCollection {
     func cropScaleParent(_ asset: SSAsset) async -> SSAsset {
         let maybeCgi = await doCropScaleExport(asset: asset)
         return SSAsset(
-            image: nil,
-            result: nil,
+            image: maybeCgi,
+            result: asset.result,
             rectToBase: nil,
-            parentId: nil,
-            stage: nil,
-            id: nil
+            parentId: asset.parentId,
+            stage: .cropScaled2,
+            id: asset.id
         )
     }
 
     // now time to get cropScaled
     // (one at a time because other ones depend on a parent being generated first)
-    func stage1to2() async -> [SSAsset] {
-        var newAssets: [SSAsset] = []
-        for asset in assets {
-            //print("----\nVerifying parentage")
-            if !verifyParentage(asset) {
-                print("PROBLEM with parentage of asset \(asset.id)")
-            }
-            if asset.stage != .needsCrop1 {
-                newAssets.append(asset)  // base asset
-            }
-            if asset.stage == .needsCrop1 {
-                let newAsset = await cropScaleParent(asset)
-                // TODOx put the entire list back in, then find another asset to convert from 1 to 2
-                // That way the next asset can be used by the next one ...
-                newAssets.append(newAsset)
+    func cropScaleOne() async -> SSAsset? {
+        guard let input = assets.filter({ $0.stage == .needsCrop1 }).first else {
+            return nil
+        }
+        let newAsset = await cropScaleParent(input)
+        return newAsset
+    }
+
+    func assetReplacing(_ id: UUID, _ newAsset: SSAsset) -> [SSAsset] {
+        return assets.map {
+            if $0.id == id {
+                return newAsset
+            } else {
+                return $0
             }
         }
-        return newAssets
+    }
+
+    func stage1to2() async {
+        while true {
+            if let oneChanged = await cropScaleOne() {
+                // replace in-place over and over, to make sure we can use previous images
+                assets = assetReplacing(oneChanged.id, oneChanged)
+            } else {
+                break
+            }
+        }
     }
 }
 
