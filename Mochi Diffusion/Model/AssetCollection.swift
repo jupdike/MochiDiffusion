@@ -175,6 +175,12 @@ class AssetCollection {
         if asset.isBaseImage {
             return CGPoint(x: 0, y: 0)
         }
+        guard let base = baseImage else {
+            print("Cannot do anything with a base image")
+            return CGPoint(x: -1337, y: -1337)
+        }
+        let ww: CGFloat = CGFloat(base.width)
+        let hh: CGFloat = CGFloat(base.height)
         guard let pid = asset.parentId else {
             print("Assets besides baseImage should have a parentId!")
             return CGPoint(x: -1337, y: -1337)
@@ -183,20 +189,18 @@ class AssetCollection {
             print("Assets besides baseImage should have a parent!")
             return CGPoint(x: -1337, y: -1337)
         }
-        var pOrigin = CGPoint(x: 0, y: 0)
-        var pScale: CGFloat = 1.0
+        var pRect = CGRect(x: 0, y: 0, width: ww, height: hh)
         if let parentRectToBase = parent.rectToBase {
-            pOrigin = parentRectToBase.origin
-            pScale = getScaleRelativeToParent(asset: parent)
+            pRect = parentRectToBase
         }
-        guard let orig = asset.rectToBase?.origin else {
+        guard let r = asset.rectToBase else {
             print("Expected own rect to be non-null while converting rect to result")
             return CGPoint(x: -1337, y: -1337)
         }
-        //let scale = getScaleRelativeToParent(asset: asset)
+        let orig = r.origin
         return CGPoint(
-            x: (orig.x - pOrigin.x) / pScale,
-            y: (orig.y - pOrigin.y) / pScale
+            x: ww * (orig.x - pRect.minX) / pRect.width,
+            y: hh * (orig.y - pRect.minY) / pRect.height
         )
     }
 
@@ -270,6 +274,14 @@ class AssetCollection {
     }
 
     func rectToParentResult(asset: ProjectAsset) -> ProjectAsset {
+        if let r = asset.rectToBase {
+            let x0 = Int(r.minX)
+            let y0 = Int(r.minY)
+            let x1 = Int(r.maxX)
+            let y1 = Int(r.maxY)
+            print("asset.rectToBase: \(x0), \(y0) -> \(x1), \(y1)")
+        }
+        // TODO  What parts are wrong? It almost works!
         //getTrueScale(asset: asset) // TODO this is wrong because it needs to be relative to parent!
         let scale = getScaleRelativeToParent(asset: asset)
         let offset = getOffsetRelativeToParent(asset: asset)
