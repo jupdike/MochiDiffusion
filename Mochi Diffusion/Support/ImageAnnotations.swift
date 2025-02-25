@@ -302,13 +302,14 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         // more of top of head
         let noseToChin = abs(myBounds.minY - center.y)
         let hRad = r + noseToChin
-        let headRect = CGRect(
+        var headRect = CGRect(
             x: cx2 - hRad,
             // don't let head rect stick out from face rect
             y: max(0, max(finalRect.maxY - hRad * 2, cy2 - hRad + dy - hRad * 0.4)),
             width: hRad * 2,
             height: hRad * 2
         )
+        let baseRect = CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height)
         var bodyRectScaled: CGRect = CGRect(
             x: headRect.minX,
             y: headRect.minY,
@@ -324,6 +325,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 height: h
             )
         }
+        bodyRectScaled = bodyRectScaled.horizKeepWithin(baseRect)
         let oneHeadA = 1.2 * (0.5 * headRect.height + 0.5 * faceRect.height)
         let oneHeadB = 1.2 * (bodyRectScaled.maxY - faceRect.maxY)
         let oneHeadC = 0.5 * oneHeadA + 0.5 * oneHeadB
@@ -336,12 +338,14 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         )
         let comboMidX = 0.5 * headRect.midX + 0.5 * anotherRect.midX
         let comboHeight = anotherRect.maxY - headRect.minY
-        let comboRect = CGRect(
+        var comboRect = CGRect(
             x: comboMidX - comboHeight * 0.5,
             y: headRect.minY,
             width: comboHeight,
             height: comboHeight
         )
+        comboRect = comboRect.horizKeepWithin(baseRect)
+
         let comboArea = comboRect.width * comboRect.height
         let imageArea = imageSize.width * imageSize.height
         //let belowRect
@@ -364,6 +368,12 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         let bigComboOverlap = bigBelowRect.intersection(comboRect)
         let bigOverlapRatio = bigComboOverlap.width * bigComboOverlap.height / comboArea
         let bigEnough = !(comboArea > 0.9 * imageArea)
+        if bigEnough {
+            print("comboRect: \(comboRect)")
+            print("headRect before: \(headRect)")
+            headRect = headRect.horizKeepWithin(comboRect)
+            print("headRect after: \(headRect)")
+        }
         // if bigEnough, also add some rectangles below anotherRect
         let extraY = belowRect.maxY  // smallish rectangle
         let extraRect = CGRect(

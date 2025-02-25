@@ -222,9 +222,11 @@ extension CGRect {
     var topRight: CGPoint { CGPoint(x: self.maxX, y: self.minY) }
     var bottomLeft: CGPoint { CGPoint(x: self.minX, y: self.maxY) }
     var bottomRight: CGPoint { CGPoint(x: self.maxX, y: self.maxY) }
+
     var maxDim: CGFloat { max(self.width, self.height) }
     var minDim: CGFloat { min(self.width, self.height) }
     var avgDim: CGFloat { 0.5 * self.width + 0.5 * self.height }
+
     func toPathPoints() -> [CGPoint] {
         [
             self.topLeft,
@@ -234,6 +236,29 @@ extension CGRect {
             self.topLeft,
         ]
     }
+
+    var description: String {
+        "TL -- \(self.minX),\(self.minY) -- BR -- \(self.maxX),\(self.maxY)"
+    }
+
+    func horizKeepWithin(_ other: CGRect) -> CGRect {
+        var ret = self
+        // push rectangle in from either side, but keep width
+        ret = CGRect(
+            x: max(other.minX, ret.minX),
+            y: ret.minY,
+            width: ret.width,
+            height: ret.height
+        )
+        ret = CGRect(
+            x: min(other.maxX - 1 - ret.width, ret.minX),
+            y: ret.minY,
+            width: ret.width,
+            height: ret.height
+        )
+        return ret
+    }
+
 }
 
 extension Text {
