@@ -8,7 +8,7 @@
 import SwiftUI
 import Vision
 
-struct FaceLandmark: Shape {
+struct AnnotationShape: Shape {
     let myShape: MyShape
     func path(in rect: CGRect) -> Path {
         let path = CGMutablePath()
@@ -67,7 +67,7 @@ struct ProjectView: View {
                             alignment: .topLeading
                         )
                     ForEach(anns.shapes) { shape in
-                        FaceLandmark(myShape: shape)
+                        AnnotationShape(myShape: shape)
                             .stroke(.orange, lineWidth: lineWidth)
                             .frame(
                                 width: CGFloat(cgi.width),
@@ -75,22 +75,31 @@ struct ProjectView: View {
                                 alignment: .topLeading
                             )
                     }
-                    FaceLandmark(myShape: anns.boundsShape)
+                    AnnotationShape(myShape: anns.boundsShape)
                         .stroke(.red, lineWidth: lineWidth)
                         .frame(
                             width: CGFloat(cgi.width),
                             height: CGFloat(cgi.height),
                             alignment: .topLeading
                         )
-                    FaceLandmark(myShape: anns.centerShape)
+                    AnnotationShape(myShape: anns.centerShape)
                         .stroke(.yellow, lineWidth: lineWidth)
                         .frame(
                             width: CGFloat(cgi.width),
                             height: CGFloat(cgi.height),
                             alignment: .topLeading
                         )
+                    ForEach(anns.limbs) { shape in
+                        AnnotationShape(myShape: shape)
+                            .stroke(.green, lineWidth: lineWidth)
+                            .frame(
+                                width: CGFloat(cgi.width),
+                                height: CGFloat(cgi.height),
+                                alignment: .topLeading
+                            )
+                    }
                     ForEach(anns.finalShapes) { shape in
-                        FaceLandmark(myShape: shape)
+                        AnnotationShape(myShape: shape)
                             .stroke(.cyan, lineWidth: lineWidth * 2)
                             .frame(
                                 width: CGFloat(cgi.width),
