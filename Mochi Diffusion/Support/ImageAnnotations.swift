@@ -300,6 +300,15 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         let finalRect = CGRect(x: cx2 - r, y: cy2 - r, width: r * 2, height: r * 2)
         // uses brow to nose instead, but if the head is tilted down, this will help capture
         // more of top of head
+        let smallDim = myBounds.avgDim
+        let smallCenterX = (0.5 * center.x + 0.5 * myBounds.midX)
+        let smallCenterY = (0.5 * center.y + 0.5 * myBounds.midY)
+        let smallFaceRect = CGRect(
+            x: smallCenterX - 0.5 * smallDim,
+            y: smallCenterY - 0.5 * smallDim,
+            width: smallDim,
+            height: smallDim
+        )
         let noseToChin = abs(myBounds.minY - center.y)
         let hRad = r + noseToChin
         var headRect = CGRect(
@@ -336,6 +345,18 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         let anotherRect = CGRect(
             x: rCenter - oneHead * 0.5, y: rTop, width: oneHead, height: oneHead
         )
+
+        let lrW = anotherRect.width * 0.6
+        let lrH = anotherRect.height * 0.6
+        let leftRect = CGRect(
+            x: anotherRect.minX, y: anotherRect.midY - 0.5 * lrH,
+            width: lrW, height: lrH
+        )
+        let rightRect = CGRect(
+            x: anotherRect.maxX - 1 - lrW, y: anotherRect.midY - 0.5 * lrH,
+            width: lrW, height: lrH
+        )
+
         let comboMidX = 0.5 * headRect.midX + 0.5 * anotherRect.midX
         let comboHeight = anotherRect.maxY - headRect.minY
         var comboRect = CGRect(
@@ -348,7 +369,6 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
 
         let comboArea = comboRect.width * comboRect.height
         let imageArea = imageSize.width * imageSize.height
-        //let belowRect
         let belowTop = 0.5 * anotherRect.midY + 0.5 * anotherRect.maxY
         let belowRect = CGRect(
             x: anotherRect.minX,
@@ -385,6 +405,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         let extraOverlapRect = extraRect.intersection(belowRect)
         let extraOverlapRatio =
             extraOverlapRect.width * extraOverlapRect.height / (belowRect.width * belowRect.height)
+
         // now gather up relevant rectangles
         var fShapes: [MyShape] = []
         var assets: [ProjectAsset] = []
@@ -393,7 +414,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         var comboOrFull = baseAsset
         var belowOrFull = baseAsset
         if bigEnough {
-            if bigOverlapRatio < 0.4 {
+            if bigOverlapRatio < 0.6 {
                 fShapes.append(
                     MyShape(points: bigBelowRect.toPathPoints(), classification: .openPath)
                 )
@@ -414,12 +435,23 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             assets.append(ProjectAsset(rectToBase: belowRect, parent: belowOrFull))
         }
         fShapes.append(MyShape(points: anotherRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: anotherRect, parent: comboOrFull))
+        let another = ProjectAsset(rectToBase: anotherRect, parent: comboOrFull)
+        assets.append(another)
+
+        fShapes.append(MyShape(points: leftRect.toPathPoints(), classification: .openPath))
+        assets.append(ProjectAsset(rectToBase: leftRect, parent: another))
+        fShapes.append(MyShape(points: rightRect.toPathPoints(), classification: .openPath))
+        assets.append(ProjectAsset(rectToBase: rightRect, parent: another))
+
         fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
         let head = ProjectAsset(rectToBase: headRect, parent: comboOrFull)
         assets.append(head)
         fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: finalRect, parent: head))
+        let face = ProjectAsset(rectToBase: finalRect, parent: head)
+        assets.append(face)
+        fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
+        assets.append(ProjectAsset(rectToBase: smallFaceRect, parent: face))
+
         return ImageAnnotations(
             shapes: shapes,
             faceRect: faceRect,
