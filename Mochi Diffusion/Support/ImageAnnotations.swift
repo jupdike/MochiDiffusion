@@ -32,6 +32,7 @@ struct MyShape: Hashable, Equatable, Identifiable {
 
 struct ImageAnnotations: Hashable, Equatable, Identifiable {
     let id: UUID = UUID()
+    let limbs: [MyShape]
     let shapes: [MyShape]
     let faceRect: CGRect
     let centerShape: MyShape
@@ -177,9 +178,114 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         return arr[0].boundingBox
     }
 
+    static func getTransformedPts(
+        _ observation: VNHumanBodyPoseObservation,
+        imageSize: CGSize,
+        _ joints: [(VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName)]
+    ) -> [(CGPoint, CGPoint)] {
+        var ret: [(CGPoint, CGPoint)] = []
+        for jointPair in joints {
+            let joint0 = jointPair.0
+            let joint1 = jointPair.1
+            guard
+                let zero = try? observation.recognizedPoint(joint0),
+                zero.confidence > 0
+            else {
+                continue
+            }
+            guard
+                let one = try? observation.recognizedPoint(joint1),
+                one.confidence > 0
+            else {
+                continue
+            }
+            ret.append(
+                (
+                    VNImagePointForNormalizedPoint(
+                        zero.location,
+                        Int(imageSize.width),
+                        Int(imageSize.height)
+                    ),
+                    VNImagePointForNormalizedPoint(
+                        one.location,
+                        Int(imageSize.width),
+                        Int(imageSize.height)
+                    )
+                ))
+        }
+        return ret
+    }
+
+    static let limbs = [
+        (
+            VNHumanBodyPoseObservation.JointName.leftAnkle,
+            VNHumanBodyPoseObservation.JointName.leftKnee
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.leftKnee,
+            VNHumanBodyPoseObservation.JointName.leftHip
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.leftWrist,
+            VNHumanBodyPoseObservation.JointName.leftElbow
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.leftElbow,
+            VNHumanBodyPoseObservation.JointName.leftShoulder
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.rightAnkle,
+            VNHumanBodyPoseObservation.JointName.rightKnee
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.rightKnee,
+            VNHumanBodyPoseObservation.JointName.rightHip
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.rightWrist,
+            VNHumanBodyPoseObservation.JointName.rightElbow
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.rightElbow,
+            VNHumanBodyPoseObservation.JointName.rightShoulder
+        ),
+    ]
+
+    static func estimatePose(cgImage: CGImage) -> [(CGPoint, CGPoint)] {
+        var ret: [(CGPoint, CGPoint)] = []
+        // Create a new image-request handler.
+        let size = CGSize(width: cgImage.width, height: cgImage.height)
+        let requestHandler = VNImageRequestHandler(cgImage: cgImage)
+        // Create a new request to recognize a human body pose.
+        let request = VNDetectHumanBodyPoseRequest(completionHandler: {
+            (request: VNRequest, error: Error?) in
+            guard
+                let observations =
+                    request.results as? [VNHumanBodyPoseObservation]
+            else {
+                return
+            }
+            // Process each observation to find the recognized body pose points.
+            for observation in observations {
+                let pairs: [(CGPoint, CGPoint)] =
+                    getTransformedPts(
+                        observation, imageSize: size, limbs)
+                ret = pairs  // returns the last human pose detected, clobbers last one
+            }
+        })
+        do {
+            // Perform the body pose-detection request.
+            try requestHandler.perform([request])
+        } catch {
+            print("Unable to perform the request: \(error).")
+        }
+        return ret
+    }
+
     static func find(inImage cgImage: CGImage) -> ImageAnnotations {
         let emptyShapes: [MyShape] = []  // empty shape list for error situation
         let emptyAnn: ImageAnnotations = ImageAnnotations(
+            limbs: [],
             shapes: emptyShapes,
             faceRect: CGRect(),
             centerShape: MyShape.emptyShape(),
@@ -190,6 +296,17 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             finalShapes: [MyShape.emptyShape()],
             assets: []
         )
+        // goes from wrist to elbow and ankle to knee
+        let limbs = estimatePose(cgImage: cgImage)
+        let fh: CGFloat = CGFloat(cgImage.height)
+        let limbShapes = limbs.map {
+            MyShape(
+                points: [
+                    CGPoint(x: $0.0.x, y: fh - 1 - $0.0.y),
+                    CGPoint(x: $0.1.x, y: fh - 1 - $0.1.y),
+                ],
+                classification: .openPath)
+        }
         print("Got an image of size \(cgImage.width) x \(cgImage.height).")
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
         let detectFacesRequest = VNDetectFaceRectanglesRequest()
@@ -453,6 +570,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         assets.append(ProjectAsset(rectToBase: smallFaceRect, parent: face))
 
         return ImageAnnotations(
+            limbs: limbShapes,
             shapes: shapes,
             faceRect: faceRect,
             centerShape: MyShape(
