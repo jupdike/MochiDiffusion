@@ -308,7 +308,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             y: smallCenterY - 0.5 * smallDim,
             width: smallDim,
             height: smallDim
-        )
+        ).horizKeepWithin(finalRect)
         let noseToChin = abs(myBounds.minY - center.y)
         let hRad = r + noseToChin
         var headRect = CGRect(
