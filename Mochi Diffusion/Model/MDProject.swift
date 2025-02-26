@@ -36,6 +36,16 @@ public class MDProjectController {
     var anns: ImageAnnotations
     let assets: AssetCollection
 
+    var currentScale = ""
+    func setMaxScale() {
+        let scale = self.assets.computeMaxScale()
+        currentScale = "\(String(format: "%1.2f", scale))x"
+    }
+
+    func executeProjectQueue() async {
+        print("TODO execute N queued projects")
+    }
+
     init(
         path: String,
         cgImage: CGImage,
@@ -56,6 +66,7 @@ public class MDProjectController {
             store: store
         )
         self.assets.assets = self.assets.stage0to1()
+        self.setMaxScale()
         store.projectController = self
     }
 

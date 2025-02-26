@@ -144,7 +144,7 @@ class AssetCollection {
         self.store = store
     }
 
-    private func computeMaxScale() -> Double {
+    public func computeMaxScale() -> Double {
         var maxScale = 0.1
         for asset in assets {
             let scale = 1.0 / asset.getScaleRelativeToBase(assets: assets)

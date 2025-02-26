@@ -121,18 +121,29 @@ struct PromptView: View {
                 Spacer()
 
                 Button {
-                    Task { await ImageController.shared.generate() }
+                    if ImageStore.shared.projectController != nil {
+                        Task { await ImageStore.shared.projectController!.executeProjectQueue() }
+                    } else {
+                        Task { await ImageController.shared.generate() }
+                    }
                 } label: {
-                    if case .ready = ImageGenerator.shared.state {
+                    if ImageStore.shared.projectController != nil {
                         Text(
-                            "Generate",
-                            comment: "Button to generate image"
+                            "Execute N",
+                            comment: "Button to execute N queued projects"
                         )
                     } else {
-                        Text(
-                            "Add to Queue",
-                            comment: "Button to generate image"
-                        )
+                        if case .ready = ImageGenerator.shared.state {
+                            Text(
+                                "Generate",
+                                comment: "Button to generate image"
+                            )
+                        } else {
+                            Text(
+                                "Add to Queue",
+                                comment: "Button to generate image"
+                            )
+                        }
                     }
                 }
                 .disabled(controller.modelName.isEmpty)

@@ -14,6 +14,7 @@ struct ProjectToolbar: View {
 
     var body: some View {
         HStack {
+            //Spacer(minLength: 100)
 
             if case .running(_) = generator.state {
                 Text("GENERATING")
@@ -52,7 +53,6 @@ struct ProjectToolbar: View {
             Button {
                 print("pressed Button")
                 guard let sdi = store.selected() else { return }
-                guard let cgi = sdi.image else { return }
                 print("path to selected image: \(sdi.path)")
                 // project should be created when Enter Project command is executed on a selected image in store
                 if let project = store.projectController {
@@ -64,10 +64,15 @@ struct ProjectToolbar: View {
                 }
             } label: {
                 Text(
-                    "Execute",
+                    "Enqueue",
                     comment: "A Button for Testing MDProject functionality"
                 )
             }
+
+            Text(
+                store.projectController != nil
+                    ? store.projectController!.currentScale
+                    : "")
 
             Button {
                 // TODO maybe write out project just in case?
