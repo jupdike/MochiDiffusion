@@ -162,12 +162,12 @@ class AssetCollection {
 
     // cache Max Scale for a given set of unique UUIDs
     public func getMaxScale() -> Double {
-        let hash: Int = hashAllSets
-        if let ret = scaleCache[hash] {
-            return ret
-        }
+        //let hash: Int = hashAllSets
+        //if let ret = scaleCache[hash] {
+        //    return ret
+        //}
         let result = computeMaxScale()
-        scaleCache[hash] = result
+        //scaleCache[hash] = result
         return result
     }
 
@@ -246,13 +246,13 @@ class AssetCollection {
         return CGSize(width: bigw, height: bigh)
     }
 
-    public var hashAllSets: Int {
-        var hasher = Hasher()
-        for asset in assets {
-            asset.hash(into: &hasher)
-        }
-        return hasher.finalize()
-    }
+    //    public var hashAllSets: Int {
+    //        var hasher = Hasher()
+    //        for asset in assets {
+    //            asset.hash(into: &hasher)
+    //        }
+    //        return hasher.finalize()
+    //    }
 
     func verifyParentage(_ asset: ProjectAsset) -> Bool {
         var node = asset
@@ -306,6 +306,7 @@ class AssetCollection {
 
     func stage0to1() -> [ProjectAsset] {
         var newAssets: [ProjectAsset] = []
+
         for asset in assets {
             //print("----\nVerifying parentage")
             if !verifyParentage(asset) {
@@ -460,7 +461,14 @@ class AssetCollection {
     var i = 1
     func stage1to2() async {
         n = assets.count
-        // baseImage is already ... based!
+        // baseImage is already ... based! but write it out to project folder to see all assets together
+        let firstBaseAsset = assets[0]
+        let bimg = firstBaseAsset.image!
+        let uuid = UUID()
+        // load the image and return it so it can possibly be used as input
+        if bimg.trySaveToPng(URL(fileURLWithPath: "\(folderPath)/\(uuid).png")) {
+            print("wrote out one PNG")
+        }
         i = 2
         while true {
             if let oneChanged = await processOne() {

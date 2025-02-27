@@ -33,18 +33,35 @@ public class MDProjectController {
         await self.controller.setProjectStatusMessage(message)
     }
 
-    var anns: ImageAnnotations
-    let assets: AssetCollection
-
     var currentScale = ""
     func setMaxScale() {
-        let scale = self.assets.computeMaxScale()
+        let scale = self.projectTask.assetCollection.computeMaxScale()
         currentScale = "\(String(format: "%1.2f", scale))x"
     }
 
-    func executeProjectQueue() async {
-        print("TODO execute N queued projects")
+    var isExecuting = false
+    var readyToEnqueue: Bool {
+        store.projectTaskQueue.count > 0 && !isExecuting
     }
+
+    func executeOneTaskProject(_ task: ProjectTask) async {
+        await task.assetCollection.stage1to2()
+        if task.shouldExportPSD {
+            await task.doExport()
+        }
+    }
+
+    func executeProjectQueue() async {
+        print("execute \(store.projectTaskQueue.count) queued projects in store.projectTaskQueue")
+        isExecuting = true
+        for task in store.projectTaskQueue {
+            await executeOneTaskProject(task)
+        }
+        store.projectTaskQueue = []
+        isExecuting = false
+    }
+
+    var projectTask: ProjectTask
 
     init(
         path: String,
@@ -59,21 +76,27 @@ public class MDProjectController {
         let folderPath = MDProjectController.imagePathToProjectFolder(path)
         self.folderPath = folderPath
         //let path = "\(self.folderPath)/project.json"
-        self.anns = ImageAnnotations.find(inImage: cgImage)
-        self.assets = AssetCollection(
-            assets: self.anns.assets,
-            folderPath: folderPath,
+        self.projectTask = ProjectTask(
+            path: path,
+            cgImage: cgImage,
             store: store
         )
-        self.assets.assets = self.assets.stage0to1()
-        self.setMaxScale()
         store.projectController = self
+        self.setMaxScale()
     }
 
-    func actuallyExecutePlan() {
-        Task {
-            await self.assets.stage1to2()
-        }
+    func enqueueProjectTask(
+        shouldExportPSD: Bool,
+        strength: Double,
+        prompt: String,
+        negativePrompt: String
+    ) {
+        // TODO allow user to opt-out in UI
+        self.projectTask.shouldExportPSD = shouldExportPSD
+        self.projectTask.strength = strength
+        self.projectTask.prompt = prompt
+        self.projectTask.negativePrompt = negativePrompt
+        store.projectTaskQueue.append(self.projectTask)
     }
 
 }

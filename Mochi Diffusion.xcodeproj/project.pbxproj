@@ -61,6 +61,7 @@
 		948853A52A543CB200B4AD86 /* GalleryPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 948853A42A543CB200B4AD86 /* GalleryPreviewView.swift */; };
 		9B7392C3298DEAC2006F03D5 /* Tokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */; };
 		A30AFDDB2D6A241800FBF5E2 /* UIShapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30AFDDA2D6A241100FBF5E2 /* UIShapes.swift */; };
+		A3262CEA2D6FA1F800D13998 /* ProjectTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3262CE92D6FA1F000D13998 /* ProjectTask.swift */; };
 		A3709C752D6CF3AE002A7B3F /* ImageAnnotations.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3709C742D6CF3A9002A7B3F /* ImageAnnotations.swift */; };
 		A3709C772D6CF437002A7B3F /* AssetCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3709C762D6CF434002A7B3F /* AssetCollection.swift */; };
 		A38C74E42D00EA2D00E99689 /* ProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A38C74E32D00EA2700E99689 /* ProjectView.swift */; };
@@ -147,6 +148,7 @@
 		948853A42A543CB200B4AD86 /* GalleryPreviewView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GalleryPreviewView.swift; sourceTree = "<group>"; };
 		9B7392C2298DEAC2006F03D5 /* Tokenizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tokenizer.swift; sourceTree = "<group>"; };
 		A30AFDDA2D6A241100FBF5E2 /* UIShapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIShapes.swift; sourceTree = "<group>"; };
+		A3262CE92D6FA1F000D13998 /* ProjectTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectTask.swift; sourceTree = "<group>"; };
 		A3709C742D6CF3A9002A7B3F /* ImageAnnotations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnnotations.swift; sourceTree = "<group>"; };
 		A3709C762D6CF434002A7B3F /* AssetCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetCollection.swift; sourceTree = "<group>"; };
 		A38C74E32D00EA2700E99689 /* ProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectView.swift; sourceTree = "<group>"; };
@@ -318,6 +320,7 @@
 				03173C122999E2B500B03456 /* SDModel.swift */,
 				D7B03F1F29D42F9900DF89DD /* SDModelAttentionType.swift */,
 				9401BC6E2CB9E9E100F00DDE /* Filter.swift */,
+				A3262CE92D6FA1F000D13998 /* ProjectTask.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -552,6 +555,7 @@
 				03173C152999F5C700B03456 /* ImageController.swift in Sources */,
 				036BFC22294B9F7500D8AD04 /* MochiDiffusionApp.swift in Sources */,
 				03EA52CE297B66C800CDF661 /* SidebarView.swift in Sources */,
+				A3262CEA2D6FA1F800D13998 /* ProjectTask.swift in Sources */,
 				9B7392C3298DEAC2006F03D5 /* Tokenizer.swift in Sources */,
 				035EDFFE295A220F00080D18 /* SeedView.swift in Sources */,
 				A3B7736F2D02B68A00C91D60 /* ProjectToolbar.swift in Sources */,

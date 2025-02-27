@@ -19,6 +19,8 @@ enum ImagesSortType: String {
 
     static let shared = ImageStore()
 
+    var projectTaskQueue: [ProjectTask] = []
+
     public var showMain: Bool {
         return projectController == nil
     }

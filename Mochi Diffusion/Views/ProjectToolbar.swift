@@ -58,7 +58,12 @@ struct ProjectToolbar: View {
                 if let project = store.projectController {
                     // actually execute the crop/scale -> generate -> stitch/scale/export-PSD pipeline
                     // all in one click!
-                    project.actuallyExecutePlan()
+                    project.enqueueProjectTask(
+                        shouldExportPSD: true,
+                        strength: controller.strength,
+                        prompt: controller.prompt,
+                        negativePrompt: controller.negativePrompt
+                    )
                 } else {
                     print("store somehow does not have a project")
                 }
@@ -68,6 +73,9 @@ struct ProjectToolbar: View {
                     comment: "A Button for Testing MDProject functionality"
                 )
             }
+            .disabled(
+                store.projectController != nil && store.projectController!.readyToEnqueue
+            )
 
             Text(
                 store.projectController != nil

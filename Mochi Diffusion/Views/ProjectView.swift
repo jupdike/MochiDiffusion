@@ -32,7 +32,7 @@ struct ProjectView: View {
         VStack(spacing: 0) {
             if let projectController = store.projectController,
                 let anns: ImageAnnotations = Optional.some(
-                    projectController.anns
+                    projectController.projectTask.anns
                 )
             {
                 GeometryReader { geometry in

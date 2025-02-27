@@ -129,7 +129,9 @@ struct PromptView: View {
                 } label: {
                     if ImageStore.shared.projectController != nil {
                         Text(
-                            "Execute N",
+                            ImageStore.shared.projectTaskQueue.count > 0
+                                ? "Execute \(ImageStore.shared.projectTaskQueue.count)"
+                                : "(0 Enqueued)",
                             comment: "Button to execute N queued projects"
                         )
                     } else {
@@ -146,7 +148,11 @@ struct PromptView: View {
                         }
                     }
                 }
-                .disabled(controller.modelName.isEmpty)
+                .disabled(
+                    controller.modelName.isEmpty
+                        || (ImageStore.shared.projectController != nil
+                            && ImageStore.shared.projectTaskQueue.count == 0)
+                )
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
             }
