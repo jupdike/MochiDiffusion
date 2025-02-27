@@ -266,17 +266,23 @@ final class ImageController: ObservableObject {
         }
     }
 
-    func generate1(_ overrideImageDir: String, _ overrideFilename: String) async {
+    func generate1(
+        _ overrideImageDir: String,
+        _ overrideFilename: String,
+        overrideStrength: Double,
+        overridePrompt: String,
+        overrideNegativePrompt: String
+    ) async {
         guard let model = currentModel else {
             return
         }
 
-        var pipelineConfig = StableDiffusionPipeline.Configuration(prompt: prompt)
-        pipelineConfig.negativePrompt = negativePrompt
+        var pipelineConfig = StableDiffusionPipeline.Configuration(prompt: overridePrompt)
+        pipelineConfig.negativePrompt = overrideNegativePrompt
         if let size = currentModel?.inputSize {
             pipelineConfig.startingImage = startingImage?.scaledAndCroppedTo(size: size)
         }
-        pipelineConfig.strength = Float(strength)
+        pipelineConfig.strength = Float(overrideStrength)
         pipelineConfig.stepCount = Int(steps)
         pipelineConfig.seed = seed
         pipelineConfig.guidanceScale = Float(guidanceScale)

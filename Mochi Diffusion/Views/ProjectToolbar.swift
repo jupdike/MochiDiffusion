@@ -51,13 +51,9 @@ struct ProjectToolbar: View {
                 .frame(height: 120)
 
             Button {
-                print("pressed Button")
                 guard let sdi = store.selected() else { return }
                 print("path to selected image: \(sdi.path)")
-                // project should be created when Enter Project command is executed on a selected image in store
                 if let project = store.projectController {
-                    // actually execute the crop/scale -> generate -> stitch/scale/export-PSD pipeline
-                    // all in one click!
                     project.enqueueProjectTask(
                         shouldExportPSD: true,
                         strength: controller.strength,
@@ -65,7 +61,7 @@ struct ProjectToolbar: View {
                         negativePrompt: controller.negativePrompt
                     )
                 } else {
-                    print("store somehow does not have a project")
+                    print("store somehow does not have a projectController")
                 }
             } label: {
                 Text(
@@ -74,7 +70,7 @@ struct ProjectToolbar: View {
                 )
             }
             .disabled(
-                store.projectController != nil && store.projectController!.readyToEnqueue
+                store.projectController == nil || store.projectController!.isExecuting
             )
 
             Text(

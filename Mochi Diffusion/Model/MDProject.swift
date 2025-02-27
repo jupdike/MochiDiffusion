@@ -40,12 +40,9 @@ public class MDProjectController {
     }
 
     var isExecuting = false
-    var readyToEnqueue: Bool {
-        store.projectTaskQueue.count > 0 && !isExecuting
-    }
 
     func executeOneTaskProject(_ task: ProjectTask) async {
-        await task.assetCollection.stage1to2()
+        await task.stage1to2()
         if task.shouldExportPSD {
             await task.doExport()
         }
