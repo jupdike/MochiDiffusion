@@ -45,6 +45,18 @@ struct ImageCommands: Commands {
                 }
                 .keyboardShortcut("E", modifiers: .command)
                 .disabled(controller.modelName.isEmpty)
+                Button {
+                    Task {
+                        await ImageController.shared.enqueueNested()
+                    }
+                } label: {
+                    Text(
+                        "Nested 2 Text File Prompts",
+                        comment: "Button to enqueue outer product of two sets of prompt files"
+                    )
+                }
+                .keyboardShortcut("N", modifiers: .command)
+                .disabled(controller.modelName.isEmpty)
             }
             Section {
                 Button {

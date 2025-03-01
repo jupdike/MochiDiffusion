@@ -64,6 +64,7 @@
 		A3262CEA2D6FA1F800D13998 /* ProjectTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3262CE92D6FA1F000D13998 /* ProjectTask.swift */; };
 		A3709C752D6CF3AE002A7B3F /* ImageAnnotations.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3709C742D6CF3A9002A7B3F /* ImageAnnotations.swift */; };
 		A3709C772D6CF437002A7B3F /* AssetCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3709C762D6CF434002A7B3F /* AssetCollection.swift */; };
+		A37E900F2D72646400E1ABEE /* NestedPromptColumn.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37E900E2D72645B00E1ABEE /* NestedPromptColumn.swift */; };
 		A38C74E42D00EA2D00E99689 /* ProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A38C74E32D00EA2700E99689 /* ProjectView.swift */; };
 		A39D86892D1DAB9C00D17829 /* PSDWriter.m in Sources */ = {isa = PBXBuildFile; fileRef = A39D86862D1DAB9C00D17829 /* PSDWriter.m */; };
 		A39D868A2D1DAB9C00D17829 /* PSDLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = A39D86842D1DAB9C00D17829 /* PSDLayer.m */; };
@@ -151,6 +152,7 @@
 		A3262CE92D6FA1F000D13998 /* ProjectTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectTask.swift; sourceTree = "<group>"; };
 		A3709C742D6CF3A9002A7B3F /* ImageAnnotations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnnotations.swift; sourceTree = "<group>"; };
 		A3709C762D6CF434002A7B3F /* AssetCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetCollection.swift; sourceTree = "<group>"; };
+		A37E900E2D72645B00E1ABEE /* NestedPromptColumn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NestedPromptColumn.swift; sourceTree = "<group>"; };
 		A38C74E32D00EA2700E99689 /* ProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectView.swift; sourceTree = "<group>"; };
 		A39D86812D1DAB9C00D17829 /* NSDataPSDAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NSDataPSDAdditions.h; sourceTree = "<group>"; };
 		A39D86822D1DAB9C00D17829 /* NSDataPSDAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NSDataPSDAdditions.m; sourceTree = "<group>"; };
@@ -314,6 +316,7 @@
 				03173C17299B3C1300B03456 /* ImageStore.swift */,
 				0311C69829899A660074BCAE /* Metadata.swift */,
 				A3BFF4B32D1860ED00D8C9DC /* MDProject.swift */,
+				A37E900E2D72645B00E1ABEE /* NestedPromptColumn.swift */,
 				0395B3102995C70400465B73 /* Scheduler.swift */,
 				030370302A2BECDD003D2F0C /* SDControlNet.swift */,
 				03E89F3B294FE6ED0067457E /* SDImage.swift */,
@@ -529,6 +532,7 @@
 				58FF218829FAE96200A70C7C /* ControlNetView.swift in Sources */,
 				C11A03882B099D9600540F7F /* JobQueueView.swift in Sources */,
 				C1ADEC2C2B16957800E142CA /* FolderMonitor.swift in Sources */,
+				A37E900F2D72646400E1ABEE /* NestedPromptColumn.swift in Sources */,
 				0352E2AA294EA0E1003FBF25 /* AppView.swift in Sources */,
 				D7B03F2029D42F9900DF89DD /* SDModelAttentionType.swift in Sources */,
 				0352E2B5294EA887003FBF25 /* Functions.swift in Sources */,

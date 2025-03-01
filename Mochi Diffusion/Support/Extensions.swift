@@ -41,6 +41,37 @@ extension View {
 }
 
 extension String {
+    func loadJpegOrPngImage() -> CGImage? {
+        let lower = self.lowercased()
+        if lower.hasSuffix(".png") {
+            return self.loadPngImage()
+        } else if lower.hasSuffix(".jpg") || lower.hasSuffix(".jpeg") {
+            return self.loadJpegImage()
+        }
+        return nil
+    }
+
+    func loadJpegImage() -> CGImage? {
+        let url = URL(filePath: self)
+        guard let dataProvider = CGDataProvider(url: url as CFURL) else {
+            print("Failed to create data provider.")
+            return nil
+        }
+        guard
+            let cgImage =
+                CGImage(
+                    jpegDataProviderSource: dataProvider,
+                    decode: nil,
+                    shouldInterpolate: true,
+                    intent: .defaultIntent
+                )
+        else {
+            print("Failed to create CGImage.")
+            return nil
+        }
+        return cgImage
+    }
+
     func loadPngImage() -> CGImage? {
         let url = URL(filePath: self)
         guard let dataProvider = CGDataProvider(url: url as CFURL) else {
@@ -60,6 +91,21 @@ extension String {
             return nil
         }
         return cgImage
+    }
+
+    // filters lines starting with # and empty lines
+    func contensOfFileAsLines() -> [String] {
+        var all = ""
+        do {
+            all = try String(contentsOfFile: self, encoding: .utf8)
+        } catch {
+            print("Error loading contents of madlib.txt")
+        }
+        guard all != "" else { return [] }
+        let lines = all.components(separatedBy: "\n").filter {
+            s in s != "" && !(s.starts(with: "#"))
+        }
+        return lines
     }
 }
 

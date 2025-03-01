@@ -354,21 +354,143 @@ final class ImageController: ObservableObject {
 
     func enqueueText() async {
         let madlibFile = "\(self.imageDir)/../madlib.txt"
-        var all = ""
-        do {
-            all = try String(contentsOfFile: madlibFile, encoding: .utf8)
-        } catch {
-            print("Error loading contents of madlib.txt")
-        }
-        guard all != "" else { return }
-        let lines = all.components(separatedBy: "\n").filter {
-            s in s != "" && !(s.starts(with: "#"))
-        }
+        let lines = madlibFile.contensOfFileAsLines()
         let n = Int(numberOfImages)
         for line in lines {
             for _ in 0..<n {
                 await generateCustomPrompt(line)
             }
+        }
+    }
+
+    func enqueueNested() async {
+        let rowsFile = "\(self.imageDir)/../rows.txt"
+        let rowPrompts = rowsFile.contensOfFileAsLines()
+        //
+        let colPrompts: [NestedPromptColumn] =
+            NestedPromptColumn.fromLines("\(self.imageDir)/../columns/")
+        guard colPrompts.count != 0 else {
+            print("Expected properly formed and properly parsed columns array")
+            return
+        }
+        //
+        let n = Int(numberOfImages)
+        var c = 1
+        let m = rowPrompts.count
+        for rowPrompt in rowPrompts {
+            // n times per row
+            for i in 0..<n {
+                // pick a random column, and a random image within that
+                guard let col: NestedPromptColumn = colPrompts.randomElement() else {
+                    print("Could not get a random column")
+                    return
+                }
+                guard let imageFile = col.imageFiles.randomElement() else {
+                    print("Could not get a random image name")
+                    return
+                }
+                guard let cgi: CGImage = imageFile.loadJpegOrPngImage() else {
+                    print("Failed to load \(imageFile)")
+                    return
+                }
+                setStartingImage(image: cgi)
+                print("-----")
+                print("\(c) / \(m): \(i+1) / \(n)")
+                print("IMAGE: \(imageFile)")
+                let customPrompt: String = col.prompt.replacing("$", with: rowPrompt)
+                print("PROMPT: \(customPrompt)")
+                // also pick random strength
+                let rangeDouble: Range<Double> = Range(
+                    uncheckedBounds: (lower: col.strengthMin, upper: col.strengthMax)
+                )
+                let randomStrength = Double.random(in: rangeDouble)
+                await generateCustomPrompt(
+                    customPrompt,
+                    overrideNegativePrompt: col.negativePrompt,
+                    overrideStrength: randomStrength
+                )
+            }
+            c += 1
+        }
+    }
+
+    func generateCustomPrompt(
+        _ overridePrompt: String,
+        overrideNegativePrompt: String,
+        overrideStrength: Double
+    ) async {
+        guard let model = currentModel else {
+            return
+        }
+
+        var pipelineConfig = StableDiffusionPipeline.Configuration(
+            prompt: overridePrompt
+        )
+        pipelineConfig.negativePrompt = overrideNegativePrompt
+        if let size = currentModel?.inputSize {
+            pipelineConfig.startingImage = startingImage?.scaledAndCroppedTo(size: size)
+        }
+        pipelineConfig.strength = Float(overrideStrength)
+        pipelineConfig.stepCount = Int(steps)
+        pipelineConfig.seed = seed
+        pipelineConfig.guidanceScale = Float(guidanceScale)
+        pipelineConfig.disableSafety = !safetyChecker
+        pipelineConfig.schedulerType = convertScheduler(scheduler)
+        for controlNet in currentControlNets {
+            if controlNet.name != nil, let size = currentModel?.inputSize,
+                let image = controlNet.image?.scaledAndCroppedTo(size: size)
+            {
+                pipelineConfig.controlNetInputs.append(image)
+            }
+        }
+        pipelineConfig.useDenoisedIntermediates = showGenerationPreview
+
+        let genConfig = GenerationConfig(
+            pipelineConfig: pipelineConfig,
+            isXL: model.isXL,
+            isSD3: model.isSD3,
+            autosaveImages: autosaveImages,
+            imageDir: self.imageDir,
+            imageType: imageType,
+            numberOfImages: 1,
+            model: model,
+            mlComputeUnit: mlComputeUnitPreference.computeUnits(forModel: model),
+            scheduler: scheduler,
+            upscaleGeneratedImages: upscaleGeneratedImages,
+            controlNets: currentControlNets.filter { $0.image != nil }.compactMap(\.name),
+            overrideFilename: ""
+        )
+
+        do {
+            try await ImageGenerator.shared.loadPipeline(
+                model: model,
+                computeUnit: genConfig.mlComputeUnit,
+                reduceMemory: self.reduceMemory)
+            try await ImageGenerator.shared.generate(genConfig)
+        } catch ImageGenerator.GeneratorError.requestedModelNotFound {
+            self.logger.error("Couldn't load \(genConfig.model.name) because it doesn't exist.")
+            await ImageGenerator.shared.updateState(
+                .ready("Couldn't load \(genConfig.model.name) because it doesn't exist."))
+        } catch ImageGenerator.GeneratorError.pipelineNotAvailable {
+            self.logger.error("Pipeline is not available.")
+            await ImageGenerator.shared.updateState(
+                .ready("There was a problem loading pipeline."))
+        } catch PipelineError.startingImageProvidedWithoutEncoder {
+            self.logger.error("The selected model does not support setting a starting image.")
+            await ImageGenerator.shared.updateState(
+                .ready("The selected model does not support setting a starting image."))
+        } catch Encoder.Error.sampleInputShapeNotCorrect {
+            self.logger.error(
+                "The starting image size doesn't match the size of the image that will be generated."
+            )
+            await ImageGenerator.shared.updateState(
+                .ready(
+                    "The starting image size doesn't match the size of the image that will be generated."
+                ))
+        } catch {
+            self.logger.error("There was a problem generating images: \(error)")
+            await ImageGenerator.shared.updateState(
+                .error("There was a problem generating images: \(error)"))
         }
     }
 
