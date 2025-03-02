@@ -365,7 +365,9 @@ final class ImageController: ObservableObject {
 
     func enqueueNested() async {
         let rowsFile = "\(self.imageDir)/../rows.txt"
-        let rowPrompts = rowsFile.contensOfFileAsLines()
+        var rowPrompts = rowsFile.contensOfFileAsLines()
+        // Shuffle, so we can run a batch and stop and get different results. Nice.
+        rowPrompts.shuffle()
         //
         let colPrompts: [NestedPromptColumn] =
             NestedPromptColumn.fromLines("\(self.imageDir)/../columns/")
