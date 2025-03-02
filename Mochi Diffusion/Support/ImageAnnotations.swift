@@ -459,19 +459,8 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         let rBottom = myBounds.maxY + oneHead * 0.95
         let rCenter = bodyRectScaled.midX + 0.5
         let rTop = min(imageSize.height - 1 - oneHead, rBottom - oneHead)
-        let anotherRect = CGRect(
+        var anotherRect = CGRect(
             x: rCenter - oneHead * 0.5, y: rTop, width: oneHead, height: oneHead
-        )
-
-        let lrW = anotherRect.width * 0.6
-        let lrH = anotherRect.height * 0.6
-        let leftRect = CGRect(
-            x: anotherRect.minX, y: anotherRect.midY - 0.5 * lrH,
-            width: lrW, height: lrH
-        )
-        let rightRect = CGRect(
-            x: anotherRect.maxX - 1 - lrW, y: anotherRect.midY - 0.5 * lrH,
-            width: lrW, height: lrH
         )
 
         let comboMidX = 0.5 * headRect.midX + 0.5 * anotherRect.midX
@@ -510,7 +499,21 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             print("headRect before: \(headRect)")
             headRect = headRect.horizKeepWithin(comboRect)
             print("headRect after: \(headRect)")
+            anotherRect = anotherRect.horizKeepWithin(comboRect)
+        } else {
+            anotherRect = anotherRect.horizKeepWithin(baseRect)
         }
+        let lrW = anotherRect.width * 0.6
+        let lrH = anotherRect.height * 0.6
+        let leftRect = CGRect(
+            x: anotherRect.minX, y: anotherRect.midY - 0.5 * lrH,
+            width: lrW, height: lrH
+        )
+        let rightRect = CGRect(
+            x: anotherRect.maxX - 1 - lrW, y: anotherRect.midY - 0.5 * lrH,
+            width: lrW, height: lrH
+        )
+
         // if bigEnough, also add some rectangles below anotherRect
         let extraY = belowRect.maxY  // smallish rectangle
         let extraRect = CGRect(
