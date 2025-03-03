@@ -14,6 +14,11 @@ struct Register: Identifiable, Equatable, Hashable {
     let id: UUID = UUID()
 }
 
+enum ModelSemantic {
+    case wideAbstract
+    case narrowLiteral
+}
+
 public struct ProjectAsset: Identifiable, Equatable, Hashable {
     var result: Register?
     // needs to be converted to result relative to parent, not relative to base
@@ -23,6 +28,7 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
     var parentId: UUID?
 
     var isBaseImage: Bool { parentId == nil }
+    var model: ModelSemantic = .wideAbstract
 
     public let stage: AssetStage
 
@@ -32,6 +38,7 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
         rectToBase: CGRect? = nil,
         parentId: UUID? = nil,
         stage: AssetStage? = nil,
+        model: ModelSemantic,
         id: UUID? = nil
     ) {
         self.result = result
@@ -39,6 +46,7 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
         self.image = image
         self.id = id != nil ? id! : UUID()
         self.parentId = parentId
+        self.model = model
         if stage == nil {
             if parentId == nil {
                 self.stage = .generatedNotUpscaled3
@@ -50,8 +58,11 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
         }
     }
 
-    init(rectToBase: CGRect, parent: ProjectAsset) {
-        self.init(image: nil, result: nil, rectToBase: rectToBase, parentId: parent.id)
+    init(rectToBase: CGRect, parent: ProjectAsset, model: ModelSemantic) {
+        self.init(
+            image: nil, result: nil, rectToBase: rectToBase,
+            parentId: parent.id, model: model
+        )
     }
 
     static func getNodeById(assets: [ProjectAsset], id: UUID) -> ProjectAsset? {
@@ -300,6 +311,7 @@ class AssetCollection {
             result: reg,
             parentId: asset.parentId,
             stage: .needsCrop1,
+            model: asset.model,
             id: asset.id
         )
     }

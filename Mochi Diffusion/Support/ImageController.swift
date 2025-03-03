@@ -227,6 +227,20 @@ final class ImageController: ObservableObject {
         return finalModelDirURL
     }
 
+    func setModel(_ model: ModelSemantic) {
+        return
+        for m in models {
+            if model == .wideAbstract && m.name.lowercased().contains("edgeofreal") {
+                self.currentModel = m
+                return
+            } else if model == .narrowLiteral && m.name.lowercased().contains("epicphoto") {
+                self.currentModel = m
+                return
+            }
+        }
+        print("Could not find model for enum \(model)")
+    }
+
     func loadModels() async {
         models = []
         logger.info("Started loading model directory at: \"\(self.modelDir)\"")

@@ -529,7 +529,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         // now gather up relevant rectangles
         var fShapes: [MyShape] = []
         var assets: [ProjectAsset] = []
-        let baseAsset = ProjectAsset(image: cgImage)
+        let baseAsset = ProjectAsset(image: cgImage, model: .wideAbstract)
         assets.append(baseAsset)
         var comboOrFull = baseAsset
         var belowOrFull = baseAsset
@@ -538,39 +538,66 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 fShapes.append(
                     MyShape(points: bigBelowRect.toPathPoints(), classification: .openPath)
                 )
-                assets.append(ProjectAsset(rectToBase: bigBelowRect, parent: baseAsset))
+                assets.append(
+                    ProjectAsset(
+                        rectToBase: bigBelowRect, parent: baseAsset, model: .wideAbstract
+                    )
+                )
             }
             fShapes.append(MyShape(points: comboRect.toPathPoints(), classification: .openPath))
-            comboOrFull = ProjectAsset(rectToBase: comboRect, parent: baseAsset)
+            comboOrFull = ProjectAsset(
+                rectToBase: comboRect, parent: baseAsset, model: .wideAbstract
+            )
             assets.append(comboOrFull)
             if extraOverlapRatio < 0.5 {
                 fShapes.append(MyShape(points: extraRect.toPathPoints(), classification: .openPath))
-                let bigBelow = ProjectAsset(rectToBase: extraRect, parent: baseAsset)
+                let bigBelow = ProjectAsset(
+                    rectToBase: extraRect, parent: baseAsset, model: .wideAbstract
+                )
                 assets.append(bigBelow)
                 belowOrFull = bigBelow
             }
         }
         if bigEnough && overlapRatio < 0.7 {
             fShapes.append(MyShape(points: belowRect.toPathPoints(), classification: .openPath))
-            assets.append(ProjectAsset(rectToBase: belowRect, parent: belowOrFull))
+            assets.append(
+                ProjectAsset(rectToBase: belowRect, parent: belowOrFull, model: .wideAbstract)
+            )
         }
         fShapes.append(MyShape(points: anotherRect.toPathPoints(), classification: .openPath))
-        let another = ProjectAsset(rectToBase: anotherRect, parent: comboOrFull)
+        let another = ProjectAsset(
+            rectToBase: anotherRect, parent: comboOrFull, model: .wideAbstract
+        )
         assets.append(another)
 
         fShapes.append(MyShape(points: leftRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: leftRect, parent: another))
+        assets.append(
+            ProjectAsset(rectToBase: leftRect, parent: another, model: .wideAbstract)
+        )
         fShapes.append(MyShape(points: rightRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: rightRect, parent: another))
-
+        assets.append(
+            ProjectAsset(rectToBase: rightRect, parent: another, model: .wideAbstract)
+        )
         fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
-        let head = ProjectAsset(rectToBase: headRect, parent: comboOrFull)
-        assets.append(head)
+        let head1 = ProjectAsset(
+            rectToBase: headRect, parent: comboOrFull, model: .wideAbstract
+        )
+        assets.append(head1)
+        let head2 = ProjectAsset(
+            rectToBase: headRect, parent: comboOrFull, model: .narrowLiteral
+        )
+        assets.append(head2)
         fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
-        let face = ProjectAsset(rectToBase: finalRect, parent: head)
+        let face = ProjectAsset(
+            rectToBase: finalRect, parent: head2, model: .narrowLiteral
+        )
         assets.append(face)
+        // TODO could use it but disallow scaling? So asset is there but optional,
+        // and if removed larger face is not blurry
         fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: smallFaceRect, parent: face))
+        assets.append(
+            ProjectAsset(rectToBase: smallFaceRect, parent: face, model: .narrowLiteral)
+        )
 
         return ImageAnnotations(
             limbs: limbShapes,

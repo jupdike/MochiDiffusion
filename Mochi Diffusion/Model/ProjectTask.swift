@@ -244,6 +244,7 @@ class ProjectTask {
             rectToBase: nil,
             parentId: asset.parentId,
             stage: .cropScaled2,
+            model: asset.model,
             id: asset.id
         )
     }
@@ -264,11 +265,15 @@ class ProjectTask {
         return ret
     }
 
-    func generateFromAssetItself(_ asset: ProjectAsset, task: ProjectTask) async -> ProjectAsset {
+    func generateFromAssetItself(
+        _ asset: ProjectAsset,
+        task: ProjectTask
+    ) async -> ProjectAsset {
         guard let image = asset.image else {
             print("Cannot generate with nil image")
             return asset  // eek, nothing to do? could cause an infinite loop
         }
+        await ImageController.shared.setModel(asset.model)
         let maybeCgi = await doGenerate(image: image)
         return ProjectAsset(
             image: maybeCgi,
@@ -276,6 +281,7 @@ class ProjectTask {
             rectToBase: nil,
             parentId: asset.parentId,
             stage: .generatedNotUpscaled3,
+            model: asset.model,
             id: asset.id
         )
     }
