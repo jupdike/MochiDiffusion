@@ -155,7 +155,11 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
     }
 
     // maybe this is really just a torso finder?
-    static func findBodyRects(cgImage: CGImage) -> CGRect? {
+    static func findBodyRectNear(
+        _ pt: CGPoint,
+        size: CGSize,
+        cgImage: CGImage
+    ) -> CGRect? {
         let detectHumanRequest = VNDetectHumanRectanglesRequest()
         let handler = VNImageRequestHandler(cgImage: cgImage)
         do {
@@ -175,7 +179,20 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         for vnho in arr {
             print("VNHO - upperOnly? \(vnho.upperBodyOnly) -- \(vnho.boundingBox)")
         }
-        return arr[0].boundingBox
+        var bestDist2: CGFloat = 1e12
+        var ret: Int = -1
+        for i in 0..<arr.count {
+            let testPt = arr[i].boundingBox.center
+            let dx = pt.x - size.width * testPt.x
+            let y: CGFloat = size.height - 1 - (size.height * testPt.y)
+            let dy = pt.y - y
+            let d2 = dx * dx + dy * dy
+            if d2 < bestDist2 {
+                bestDist2 = d2
+                ret = i
+            }
+        }
+        return arr[ret].boundingBox
     }
 
     static func getTransformedPts(
@@ -218,6 +235,10 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
 
     static let limbs = [
         (
+            VNHumanBodyPoseObservation.JointName.rightShoulder,
+            VNHumanBodyPoseObservation.JointName.leftShoulder
+        ),
+        (
             VNHumanBodyPoseObservation.JointName.leftAnkle,
             VNHumanBodyPoseObservation.JointName.leftKnee
         ),
@@ -255,8 +276,28 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         ),
     ]
 
-    static func estimatePose(cgImage: CGImage) -> [(CGPoint, CGPoint)] {
+    static func computeBonesBoundingBox(_ pairs: [(CGPoint, CGPoint)]) -> CGRect? {
+        var boundingBox: CGRect? = nil
+        for (a, b) in pairs {
+            if boundingBox == nil {
+                boundingBox = a.toRect
+            }
+            boundingBox = boundingBox!.union(a.toRect)
+            boundingBox = boundingBox!.union(b.toRect)
+        }
+        return boundingBox
+    }
+
+    static func computeBonesArea(_ pairs: [(CGPoint, CGPoint)]) -> Int {
+        if let bbox = computeBonesBoundingBox(pairs) {
+            return Int(bbox.width * bbox.height)
+        }
+        return 0
+    }
+
+    static func estimateBiggestPose(cgImage: CGImage) -> [(CGPoint, CGPoint)] {
         var ret: [(CGPoint, CGPoint)] = []
+        var retAreaPixels: Int = 0
         // Create a new image-request handler.
         let size = CGSize(width: cgImage.width, height: cgImage.height)
         let requestHandler = VNImageRequestHandler(cgImage: cgImage)
@@ -274,7 +315,11 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 let pairs: [(CGPoint, CGPoint)] =
                     getTransformedPts(
                         observation, imageSize: size, limbs)
-                ret = pairs  // returns the last human pose detected, clobbers last one
+                let areaOfBones: Int = computeBonesArea(pairs)
+                if areaOfBones > retAreaPixels {
+                    ret = pairs  // returns the biggest human pose detected
+                    retAreaPixels = areaOfBones
+                }
             }
         })
         do {
@@ -282,6 +327,25 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             try requestHandler.perform([request])
         } catch {
             print("Unable to perform the request: \(error).")
+        }
+        return ret
+    }
+
+    static func faceIndexNearest(
+        _ pt: CGPoint, size: CGSize, landmarks: [VNFaceObservation]
+    ) -> Int {
+        var bestDist2: CGFloat = 1e12
+        var ret: Int = -1
+        for i in 0..<landmarks.count {
+            let testPt = landmarks[i].boundingBox.bottomCenter
+            let dx = pt.x - size.width * testPt.x
+            let y: CGFloat = size.height - 1 - (size.height * testPt.y)
+            let dy = pt.y - y
+            let d2 = dx * dx + dy * dy
+            if d2 < bestDist2 {
+                bestDist2 = d2
+                ret = i
+            }
         }
         return ret
     }
@@ -303,8 +367,11 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             finalShapes: [MyShape.emptyShape()],
             assets: []
         )
+        //let bigBoneIndex = indexOfBiggestBones(cgImage: cgImage)
+        // TODO use this
         // goes from wrist to elbow and ankle to knee
-        let limbs = estimatePose(cgImage: cgImage)
+        let limbs = estimateBiggestPose(cgImage: cgImage)
+        //if limbs.count >=
         let fh: CGFloat = CGFloat(cgImage.height)
         let limbShapes = limbs.map {
             MyShape(
@@ -313,6 +380,15 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                     CGPoint(x: $0.1.x, y: fh - 1 - $0.1.y),
                 ],
                 classification: .openPath)
+        }
+        var neckPoint: CGPoint = CGPoint(x: -1337, y: -1337)
+        if limbShapes.count > 0 {
+            let shouldersBone = limbShapes[0]
+            if let shoulderBox = computeBonesBoundingBox(
+                [(shouldersBone.points[0], shouldersBone.points[1])]
+            ) {
+                neckPoint = shoulderBox.center
+            }
         }
         print("Got an image of size \(cgImage.width) x \(cgImage.height).")
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
@@ -341,40 +417,46 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             print(error)
             return emptyAnn
         }
-        guard let quality = qualityRequest.results,
-            let qScore = quality[0].faceCaptureQuality
-        else {
-            print("Nil quality")
-            return emptyAnn
-        }
-        print("Quality score: \(qScore)")
-        guard let landmarks = landmarksRequest.results,
+        guard let landmarks: [VNFaceObservation] = landmarksRequest.results,
             landmarks.count > 0
         else {
             print("Nil landmarks")
             return emptyAnn
         }
-        let rect = landmarks[0].boundingBox
+        let faceIndex: Int = faceIndexNearest(neckPoint, size: imageSize, landmarks: landmarks)
+        guard let quality = qualityRequest.results,
+            let qScore = quality[faceIndex].faceCaptureQuality
+        else {
+            print("Nil quality")
+            return emptyAnn
+        }
+        print("Quality score: \(qScore)")
+        //
+        let rect = landmarks[faceIndex].boundingBox
         print("Landmark bbox: \(rect.minX), \(rect.minY) to \(rect.maxX), \(rect.maxY)")
-        let shapes = [
-            MyShape(region: landmarks[0].landmarks?.faceContour, size: imageSize),
-            MyShape(region: landmarks[0].landmarks?.leftEye, size: imageSize),
-            MyShape(region: landmarks[0].landmarks?.rightEye, size: imageSize),
-            MyShape(region: landmarks[0].landmarks?.noseCrest, size: imageSize),
-            MyShape(region: landmarks[0].landmarks?.leftEyebrow, size: imageSize),
-            MyShape(region: landmarks[0].landmarks?.rightEyebrow, size: imageSize),
-            MyShape(region: landmarks[0].landmarks?.innerLips, size: imageSize),
-            MyShape(region: landmarks[0].landmarks?.outerLips, size: imageSize),
-            MyShape(region: landmarks[0].landmarks?.medianLine, size: imageSize),
+        guard let face = landmarks[faceIndex].landmarks else {
+            print("Got a nil set of face landmarks")
+            return emptyAnn
+        }
+        var shapes = [
+            MyShape(region: face.faceContour, size: imageSize),
+            MyShape(region: face.leftEye, size: imageSize),
+            MyShape(region: face.rightEye, size: imageSize),
+            MyShape(region: face.noseCrest, size: imageSize),
+            MyShape(region: face.leftEyebrow, size: imageSize),
+            MyShape(region: face.rightEyebrow, size: imageSize),
+            MyShape(region: face.innerLips, size: imageSize),
+            MyShape(region: face.outerLips, size: imageSize),
+            MyShape(region: face.medianLine, size: imageSize),
         ]
 
         let center: CGPoint = tipOfNose(
-            noseCrest: landmarks[0].landmarks?.noseCrest,
-            median: landmarks[0].landmarks?.medianLine,
+            noseCrest: face.noseCrest,
+            median: face.medianLine,
             size: imageSize
         )
         let rectRad: CGFloat = findRadius(
-            landmarks[0].landmarks?.faceContour,
+            face.faceContour,
             size: imageSize,
             center: center
         )
@@ -385,9 +467,9 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             height: rectRad * 2
         )
         let myBounds: CGRect = getBounds(
-            contour: landmarks[0].landmarks?.faceContour,
-            brow1: landmarks[0].landmarks?.leftEyebrow,
-            brow2: landmarks[0].landmarks?.rightEyebrow,
+            contour: face.faceContour,
+            brow1: face.leftEyebrow,
+            brow2: face.rightEyebrow,
             size: imageSize
         )
         let centerPts: [CGPoint] = [
@@ -449,7 +531,11 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             width: headRect.width,
             height: headRect.height * 2.0
         )
-        if let bodyRect: CGRect = findBodyRects(cgImage: cgImage) {
+        if let bodyRect: CGRect = findBodyRectNear(
+            neckPoint,
+            size: imageSize,
+            cgImage: cgImage
+        ) {
             let h = bodyRect.height * imageSize.height
             bodyRectScaled = CGRect(
                 x: bodyRect.origin.x * imageSize.width,
@@ -458,6 +544,9 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 height: h
             )
         }
+        // see rectangle from human observation rectangles, when more than one figure, but
+        // main figure is missing
+        //shapes.append(MyShape(points: bodyRectScaled.toPathPoints(), classification: .openPath))
         bodyRectScaled = bodyRectScaled.horizKeepWithin(baseRect)
         let oneHeadA = 1.2 * (0.5 * headRect.height + 0.5 * faceRect.height)
         let oneHeadB = 1.2 * (bodyRectScaled.maxY - faceRect.maxY)
@@ -595,16 +684,16 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         )
         assets.append(head2)
         fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
-        let face = ProjectAsset(
+        let faceAsset = ProjectAsset(
             rectToBase: finalRect, parent: head2, model: .narrowLiteral
         )
-        assets.append(face)
+        assets.append(faceAsset)
         // TODO could use it but disallow scaling? So asset is there but optional,
         // and if removed larger face is not blurry
         if shouldUseSmallestFace {
             fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
             assets.append(
-                ProjectAsset(rectToBase: smallFaceRect, parent: face, model: .narrowLiteral)
+                ProjectAsset(rectToBase: smallFaceRect, parent: faceAsset, model: .narrowLiteral)
             )
         }
         return ImageAnnotations(

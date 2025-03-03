@@ -263,11 +263,18 @@ extension CGImage {
     }
 }
 
+extension CGPoint {
+    var toRect: CGRect { CGRect(x: self.x, y: self.y, width: 0, height: 0) }
+}
+
 extension CGRect {
+    var center: CGPoint { CGPoint(x: self.midX, y: self.midY) }
     var topLeft: CGPoint { self.origin }
     var topRight: CGPoint { CGPoint(x: self.maxX, y: self.minY) }
+    var topCenter: CGPoint { CGPoint(x: self.midX, y: self.minY) }
     var bottomLeft: CGPoint { CGPoint(x: self.minX, y: self.maxY) }
     var bottomRight: CGPoint { CGPoint(x: self.maxX, y: self.maxY) }
+    var bottomCenter: CGPoint { CGPoint(x: self.midX, y: self.maxY) }
 
     var maxDim: CGFloat { max(self.width, self.height) }
     var minDim: CGFloat { min(self.width, self.height) }
