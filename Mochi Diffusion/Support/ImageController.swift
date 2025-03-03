@@ -106,6 +106,9 @@ final class ImageController: ObservableObject {
     }
 
     @Published
+    public var shouldUseSmallestFace: Bool = false
+
+    @Published
     private(set) var currentControlNets: [(name: String?, image: CGImage?)] = []
 
     @AppStorage("ModelDir") var modelDir = ""

@@ -28,13 +28,37 @@ struct AppView: View {
                 ProjectView()
             }
         }
-        .toolbar {
-            if store.showMain {
-                GalleryToolbarView(isShowingInspector: $isShowingInspector)
-            } else {
-                ProjectToolbar()
+        .myToolbar(showMain: store.showMain, isShowingInspector: $isShowingInspector)
+    }
+}
+
+struct MyToolbar: ViewModifier {
+    let showMain: Bool
+    var isShowingInspector: Binding<Bool>
+
+    func body(content: Content) -> some View {
+        if showMain {
+            content.toolbar {
+                GalleryToolbarView(isShowingInspector: isShowingInspector)
+            }
+        } else {
+            content.toolbar {
+                ToolbarItem(placement: .navigation) {
+                    ProjectToolbarLeft()
+                }
+                ToolbarItem(placement: .principal) {
+                    ProjectToolbarCenter()
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    ProjectToolbarRight()
+                }
             }
         }
+    }
+}
+extension View {
+    func myToolbar(showMain: Bool, isShowingInspector: Binding<Bool>) -> some View {
+        modifier(MyToolbar(showMain: showMain, isShowingInspector: isShowingInspector))
     }
 }
 

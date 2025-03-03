@@ -234,6 +234,10 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             VNHumanBodyPoseObservation.JointName.leftShoulder
         ),
         (
+            VNHumanBodyPoseObservation.JointName.neck,
+            VNHumanBodyPoseObservation.JointName.root
+        ),
+        (
             VNHumanBodyPoseObservation.JointName.rightAnkle,
             VNHumanBodyPoseObservation.JointName.rightKnee
         ),
@@ -282,7 +286,10 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         return ret
     }
 
-    static func find(inImage cgImage: CGImage) -> ImageAnnotations {
+    static func find(
+        inImage cgImage: CGImage,
+        shouldUseSmallestFace: Bool
+    ) -> ImageAnnotations {
         let emptyShapes: [MyShape] = []  // empty shape list for error situation
         let emptyAnn: ImageAnnotations = ImageAnnotations(
             limbs: [],
@@ -579,10 +586,10 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             ProjectAsset(rectToBase: rightRect, parent: another, model: .wideAbstract)
         )
         fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
-        let head1 = ProjectAsset(
-            rectToBase: headRect, parent: comboOrFull, model: .wideAbstract
-        )
-        assets.append(head1)
+        //let head1 = ProjectAsset(
+        //    rectToBase: headRect, parent: comboOrFull, model: .wideAbstract
+        //)
+        //assets.append(head1)
         let head2 = ProjectAsset(
             rectToBase: headRect, parent: comboOrFull, model: .narrowLiteral
         )
@@ -594,11 +601,12 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         assets.append(face)
         // TODO could use it but disallow scaling? So asset is there but optional,
         // and if removed larger face is not blurry
-        fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
-        assets.append(
-            ProjectAsset(rectToBase: smallFaceRect, parent: face, model: .narrowLiteral)
-        )
-
+        if shouldUseSmallestFace {
+            fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
+            assets.append(
+                ProjectAsset(rectToBase: smallFaceRect, parent: face, model: .narrowLiteral)
+            )
+        }
         return ImageAnnotations(
             limbs: limbShapes,
             shapes: shapes,

@@ -65,7 +65,8 @@ public class MDProjectController {
         cgImage: CGImage,
         store: ImageStore,
         controller: ImageController,
-        generator: ImageGenerator
+        generator: ImageGenerator,
+        shouldUseSmallestFace: Bool
     ) {
         self.store = store
         self.controller = controller
@@ -76,7 +77,8 @@ public class MDProjectController {
         self.projectTask = ProjectTask(
             path: path,
             cgImage: cgImage,
-            store: store
+            store: store,
+            shouldUseSmallestFace: shouldUseSmallestFace
         )
         store.projectController = self
         self.setMaxScale()

@@ -92,7 +92,8 @@ struct ImageCommands: Commands {
                                 cgImage: cgi,
                                 store: store,
                                 controller: controller,
-                                generator: generator
+                                generator: generator,
+                                shouldUseSmallestFace: controller.shouldUseSmallestFace
                             )
                         } else {
                             store.projectController = nil
