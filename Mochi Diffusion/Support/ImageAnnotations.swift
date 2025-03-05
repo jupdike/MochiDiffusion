@@ -7,6 +7,13 @@
 
 import Vision
 
+struct Bone {
+    let jointA: VNHumanBodyPoseObservation.JointName
+    let pointA: CGPoint
+    let jointB: VNHumanBodyPoseObservation.JointName
+    let pointB: CGPoint
+}
+
 struct MyShape: Hashable, Equatable, Identifiable {
     let points: [CGPoint]
     let pointsClassification: VNPointsClassification
@@ -199,8 +206,8 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         _ observation: VNHumanBodyPoseObservation,
         imageSize: CGSize,
         _ joints: [(VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName)]
-    ) -> [(CGPoint, CGPoint)] {
-        var ret: [(CGPoint, CGPoint)] = []
+    ) -> [Bone] {
+        var ret: [Bone] = []
         for jointPair in joints {
             let joint0 = jointPair.0
             let joint1 = jointPair.1
@@ -217,13 +224,15 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 continue
             }
             ret.append(
-                (
-                    VNImagePointForNormalizedPoint(
+                Bone(
+                    jointA: joint0,
+                    pointA: VNImagePointForNormalizedPoint(
                         zero.location,
                         Int(imageSize.width),
                         Int(imageSize.height)
                     ),
-                    VNImagePointForNormalizedPoint(
+                    jointB: joint1,
+                    pointB: VNImagePointForNormalizedPoint(
                         one.location,
                         Int(imageSize.width),
                         Int(imageSize.height)
@@ -276,9 +285,11 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         ),
     ]
 
-    static func computeBonesBoundingBox(_ pairs: [(CGPoint, CGPoint)]) -> CGRect? {
+    static func computeBonesBoundingBox(_ bones: [Bone]) -> CGRect? {
         var boundingBox: CGRect? = nil
-        for (a, b) in pairs {
+        for bone in bones {
+            let a = bone.pointA
+            let b = bone.pointB
             if boundingBox == nil {
                 boundingBox = a.toRect
             }
@@ -288,15 +299,15 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         return boundingBox
     }
 
-    static func computeBonesArea(_ pairs: [(CGPoint, CGPoint)]) -> Int {
+    static func computeBonesArea(_ pairs: [Bone]) -> Int {
         if let bbox = computeBonesBoundingBox(pairs) {
             return Int(bbox.width * bbox.height)
         }
         return 0
     }
 
-    static func estimateBiggestPose(cgImage: CGImage) -> [(CGPoint, CGPoint)] {
-        var ret: [(CGPoint, CGPoint)] = []
+    static func estimateBiggestPose(cgImage: CGImage) -> [Bone] {
+        var ret: [Bone] = []
         var retAreaPixels: Int = 0
         // Create a new image-request handler.
         let size = CGSize(width: cgImage.width, height: cgImage.height)
@@ -312,12 +323,12 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             }
             // Process each observation to find the recognized body pose points.
             for observation in observations {
-                let pairs: [(CGPoint, CGPoint)] =
+                let bones: [Bone] =
                     getTransformedPts(
                         observation, imageSize: size, limbs)
-                let areaOfBones: Int = computeBonesArea(pairs)
+                let areaOfBones: Int = computeBonesArea(bones)
                 if areaOfBones > retAreaPixels {
-                    ret = pairs  // returns the biggest human pose detected
+                    ret = bones  // returns the biggest human pose detected
                     retAreaPixels = areaOfBones
                 }
             }
@@ -371,13 +382,12 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         // TODO use this
         // goes from wrist to elbow and ankle to knee
         let limbs = estimateBiggestPose(cgImage: cgImage)
-        //if limbs.count >=
         let fh: CGFloat = CGFloat(cgImage.height)
         let limbShapes = limbs.map {
             MyShape(
                 points: [
-                    CGPoint(x: $0.0.x, y: fh - 1 - $0.0.y),
-                    CGPoint(x: $0.1.x, y: fh - 1 - $0.1.y),
+                    CGPoint(x: $0.pointA.x, y: fh - 1 - $0.pointA.y),
+                    CGPoint(x: $0.pointB.x, y: fh - 1 - $0.pointB.y),
                 ],
                 classification: .openPath)
         }
@@ -385,7 +395,15 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         if limbShapes.count > 0 {
             let shouldersBone = limbShapes[0]
             if let shoulderBox = computeBonesBoundingBox(
-                [(shouldersBone.points[0], shouldersBone.points[1])]
+                // these labels may be backwards but it doesn't matter
+                [
+                    Bone(
+                        jointA: .leftShoulder,
+                        pointA: shouldersBone.points[0],
+                        jointB: .rightShoulder,
+                        pointB: shouldersBone.points[1]
+                    )
+                ]
             ) {
                 neckPoint = shoulderBox.center
             }
