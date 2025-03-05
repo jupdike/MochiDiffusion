@@ -369,6 +369,137 @@ final class ImageController: ObservableObject {
 
     // ----------
 
+    func generateSeeded(
+        overrideSeed: UInt32,
+        overrideStrength: Double,
+        overrideFilename: String
+    ) async {
+        guard let model = currentModel else {
+            return
+        }
+
+        var pipelineConfig = StableDiffusionPipeline.Configuration(
+            prompt: prompt
+        )
+        pipelineConfig.negativePrompt = negativePrompt
+        if let size = currentModel?.inputSize {
+            pipelineConfig.startingImage = startingImage?.scaledAndCroppedTo(size: size)
+        }
+        pipelineConfig.strength = Float(overrideStrength)
+        pipelineConfig.stepCount = Int(steps)
+        pipelineConfig.seed = overrideSeed
+        pipelineConfig.guidanceScale = Float(guidanceScale)
+        pipelineConfig.disableSafety = !safetyChecker
+        pipelineConfig.schedulerType = convertScheduler(scheduler)
+        for controlNet in currentControlNets {
+            if controlNet.name != nil, let size = currentModel?.inputSize,
+                let image = controlNet.image?.scaledAndCroppedTo(size: size)
+            {
+                pipelineConfig.controlNetInputs.append(image)
+            }
+        }
+        pipelineConfig.useDenoisedIntermediates = showGenerationPreview
+
+        let genConfig = GenerationConfig(
+            pipelineConfig: pipelineConfig,
+            isXL: model.isXL,
+            isSD3: model.isSD3,
+            autosaveImages: autosaveImages,
+            imageDir: self.imageDir,
+            imageType: imageType,
+            numberOfImages: 1,
+            model: model,
+            mlComputeUnit: mlComputeUnitPreference.computeUnits(forModel: model),
+            scheduler: scheduler,
+            upscaleGeneratedImages: upscaleGeneratedImages,
+            controlNets: currentControlNets.filter { $0.image != nil }.compactMap(\.name),
+            overrideFilename: overrideFilename
+        )
+
+        do {
+            try await ImageGenerator.shared.loadPipeline(
+                model: model,
+                computeUnit: genConfig.mlComputeUnit,
+                reduceMemory: self.reduceMemory)
+            try await ImageGenerator.shared.generate(genConfig)
+        } catch ImageGenerator.GeneratorError.requestedModelNotFound {
+            self.logger.error("Couldn't load \(genConfig.model.name) because it doesn't exist.")
+            await ImageGenerator.shared.updateState(
+                .ready("Couldn't load \(genConfig.model.name) because it doesn't exist."))
+        } catch ImageGenerator.GeneratorError.pipelineNotAvailable {
+            self.logger.error("Pipeline is not available.")
+            await ImageGenerator.shared.updateState(
+                .ready("There was a problem loading pipeline."))
+        } catch PipelineError.startingImageProvidedWithoutEncoder {
+            self.logger.error("The selected model does not support setting a starting image.")
+            await ImageGenerator.shared.updateState(
+                .ready("The selected model does not support setting a starting image."))
+        } catch Encoder.Error.sampleInputShapeNotCorrect {
+            self.logger.error(
+                "The starting image size doesn't match the size of the image that will be generated."
+            )
+            await ImageGenerator.shared.updateState(
+                .ready(
+                    "The starting image size doesn't match the size of the image that will be generated."
+                ))
+        } catch {
+            self.logger.error("There was a problem generating images: \(error)")
+            await ImageGenerator.shared.updateState(
+                .error("There was a problem generating images: \(error)"))
+        }
+    }
+
+    func test2() async {
+        var maskers: [Masker] = []
+        let n = Int(self.steps / 3)
+        for i in 0...n {
+            guard
+                let cgi =
+                    "\(self.imageDir)/../seeded/\(String(format: "%02d", i)).png"
+                    .loadPngImage()
+            else {
+                print("Failed to load PNG from seeded generation")
+                return
+            }
+            guard let masker = Masker(taperedColorImage: cgi) else {
+                print("Failed to make Masker from CGImage")
+                return
+            }
+            maskers.append(masker)
+        }
+        let un = Masker.toImage(with: maskers)
+        guard let cgi2 = un?.takeUnretainedValue() else {
+            print("failed to get CGImage in Swift")
+            return
+        }
+        if cgi2.trySaveToPng(URL(fileURLWithPath: "\(self.imageDir)/../masker-test.png")) {
+            print("successfully wrote out image")
+        }
+    }
+
+    func generateSeeded() async {
+        // one seed to rule them all... that is the idea, anyway?
+        // TODO copy input image to 00.png as well!
+        let seed = UInt32.random(in: 0..<UInt32.max)
+        let n = Int(self.steps / 3)
+        for i in 1...n {
+            let strength = Double(i) / Double(self.steps)
+            // 0.01 to 0.33 .. but scaled to 42 steps, is
+            // 41 steps down to 28 steps, or
+            // 1 step up to 14 steps
+            // so we have 15 frames of animation
+            // morphing from original image to final image
+            // so we can mask the edges in a vignette shape
+            // around the image, and see if it blends seemlessly? ... <fingers crossed emoji>
+            print("strength: \(strength)")
+            await generateSeeded(
+                overrideSeed: seed,
+                overrideStrength: strength,
+                overrideFilename: "/../seeded/\(String(format: "%02d", i)).png"
+            )
+        }
+    }
+
     func enqueueText() async {
         let madlibFile = "\(self.imageDir)/../madlib.txt"
         let lines = madlibFile.contensOfFileAsLines()

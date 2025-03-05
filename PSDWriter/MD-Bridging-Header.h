@@ -10,5 +10,6 @@
 
 #import "PSDLayer.h"
 #import "PSDWriter.h"
+#import "Masker.h"
 
 #endif /* MD_Bridging_Header_h */

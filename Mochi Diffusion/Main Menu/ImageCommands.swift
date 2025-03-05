@@ -57,6 +57,19 @@ struct ImageCommands: Commands {
                 }
                 .keyboardShortcut("N", modifiers: .command)
                 .disabled(controller.modelName.isEmpty)
+                Button {
+                    Task {
+                        //await ImageController.shared.generateSeeded()
+                        await ImageController.shared.test2()
+                    }
+                } label: {
+                    Text(
+                        "Test Generate Seeded",
+                        comment: "Button to generate the same img2img over and over"
+                    )
+                }
+                .keyboardShortcut("T", modifiers: .command)
+                .disabled(controller.modelName.isEmpty)
             }
             Section {
                 Button {
