@@ -231,12 +231,15 @@ final class ImageController: ObservableObject {
     }
 
     func setModel(_ model: ModelSemantic) {
-        return
+        //return
         for m in models {
             if model == .wideAbstract && m.name.lowercased().contains("edgeofreal") {
                 self.currentModel = m
                 return
-            } else if model == .narrowLiteral && m.name.lowercased().contains("epicphoto") {
+            } else if model == .narrowLiteral && m.name.lowercased().contains("realisticvision") {
+                self.currentModel = m
+                return
+            } else if model == .tightLiteral && m.name.lowercased().contains("epicphoto") {
                 self.currentModel = m
                 return
             }

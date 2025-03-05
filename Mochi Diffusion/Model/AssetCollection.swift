@@ -17,6 +17,7 @@ struct Register: Identifiable, Equatable, Hashable {
 enum ModelSemantic {
     case wideAbstract
     case narrowLiteral
+    case tightLiteral
 }
 
 public struct ProjectAsset: Identifiable, Equatable, Hashable {

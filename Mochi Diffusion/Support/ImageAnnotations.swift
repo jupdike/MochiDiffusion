@@ -675,10 +675,10 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             ProjectAsset(rectToBase: rightRect, parent: another, model: .wideAbstract)
         )
         fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
-        //let head1 = ProjectAsset(
-        //    rectToBase: headRect, parent: comboOrFull, model: .wideAbstract
-        //)
-        //assets.append(head1)
+        let head1 = ProjectAsset(
+            rectToBase: headRect, parent: comboOrFull, model: .wideAbstract
+        )
+        assets.append(head1)
         let head2 = ProjectAsset(
             rectToBase: headRect, parent: comboOrFull, model: .narrowLiteral
         )
@@ -693,7 +693,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         if shouldUseSmallestFace {
             fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
             assets.append(
-                ProjectAsset(rectToBase: smallFaceRect, parent: faceAsset, model: .narrowLiteral)
+                ProjectAsset(rectToBase: smallFaceRect, parent: faceAsset, model: .tightLiteral)
             )
         }
         return ImageAnnotations(
