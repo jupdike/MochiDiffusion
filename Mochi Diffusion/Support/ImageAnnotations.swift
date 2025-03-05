@@ -525,6 +525,25 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             height: hRad * 2
         )
         let baseRect = CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height)
+        //
+        // four corners for some extra detail across entire image
+        let cornerW = baseRect.width * 0.6
+        let cornerH = baseRect.height * 0.6
+        let nwRect = CGRect(x: 0, y: 0, width: cornerW, height: cornerH)
+        let neRect = CGRect(x: baseRect.width - cornerW, y: 0, width: cornerW, height: cornerH)
+        let swRect = CGRect(
+            x: 0,
+            y: baseRect.height - cornerH,
+            width: cornerW,
+            height: cornerH
+        )
+        let seRect = CGRect(
+            x: baseRect.width - cornerW,
+            y: baseRect.height - cornerH,
+            width: cornerW,
+            height: cornerH
+        )
+        //
         var bodyRectScaled: CGRect = CGRect(
             x: headRect.minX,
             y: headRect.minY,
@@ -627,6 +646,16 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         var assets: [ProjectAsset] = []
         let baseAsset = ProjectAsset(image: cgImage, model: .wideAbstract)
         assets.append(baseAsset)
+        // corners
+        fShapes.append(MyShape(points: nwRect.toPathPoints(), classification: .openPath))
+        assets.append(ProjectAsset(rectToBase: nwRect, parent: baseAsset, model: .wideAbstract))
+        fShapes.append(MyShape(points: neRect.toPathPoints(), classification: .openPath))
+        assets.append(ProjectAsset(rectToBase: neRect, parent: baseAsset, model: .wideAbstract))
+        fShapes.append(MyShape(points: swRect.toPathPoints(), classification: .openPath))
+        assets.append(ProjectAsset(rectToBase: swRect, parent: baseAsset, model: .wideAbstract))
+        fShapes.append(MyShape(points: seRect.toPathPoints(), classification: .openPath))
+        assets.append(ProjectAsset(rectToBase: seRect, parent: baseAsset, model: .wideAbstract))
+        //
         var comboOrFull = baseAsset
         var belowOrFull = baseAsset
         if bigEnough {
