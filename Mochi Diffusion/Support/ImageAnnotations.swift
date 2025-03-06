@@ -772,11 +772,19 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             )
             let dx = wrist.x - elbow.x
             let dy = wrist.y - elbow.y
-            let squareDim = sqrt(dx * dx + dy * dy) * 1.2
+            let squareDim = sqrt(dx * dx + dy * dy) * 1.4
             // add a biggish rectangle where the hand might be
+            let extended1 = CGPoint(
+                x: wrist.x + dx * 0.3,
+                y: wrist.y + dy * 0.3
+            )
+            let extended2 = CGPoint(
+                x: wrist.x + dx * 0.6,
+                y: wrist.y + dy * 0.6
+            )
             let bigHandRect = CGRect(
-                x: wrist.x - squareDim * 0.5,
-                y: wrist.y - squareDim * 0.5,
+                x: extended1.x - squareDim * 0.5,
+                y: extended1.y - squareDim * 0.5,
                 width: squareDim,
                 height: squareDim
             ).keepWithin(baseRect)  // ensure rect does not go off the edge
@@ -790,13 +798,9 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 )
             assets.append(bigHandAsset)
             // add another more zoomed one
-            let extended = CGPoint(
-                x: wrist.x + dx * 0.75,
-                y: wrist.y + dy * 0.75
-            )
             let smallHandRect = CGRect(
-                x: extended.x - smallFaceRect.width * 0.8,
-                y: extended.y - smallFaceRect.height * 0.8,
+                x: extended2.x - smallFaceRect.width * 0.8,
+                y: extended2.y - smallFaceRect.height * 0.8,
                 width: smallFaceRect.width * 1.6,
                 height: smallFaceRect.height * 1.6
             ).keepWithin(bigHandRect)
