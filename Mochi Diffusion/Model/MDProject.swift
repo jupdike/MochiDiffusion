@@ -93,9 +93,16 @@ public class MDProjectController {
         // TODO allow user to opt-out in UI
         self.projectTask.shouldExportPSD = shouldExportPSD
         self.projectTask.strength = strength
-        self.projectTask.prompt = prompt
-        self.projectTask.negativePrompt = negativePrompt
-        store.projectTaskQueue.append(self.projectTask)
+        let p = prompt
+        if p.contains("{") && p.contains("}") {
+            self.projectTask.prompt = p
+            self.projectTask.negativePrompt = negativePrompt
+            store.projectTaskQueue.append(self.projectTask)
+        } else {
+            Task {
+                await self.logMessage("Failed. Prompt needs { } chars.")
+            }
+        }
     }
 
 }

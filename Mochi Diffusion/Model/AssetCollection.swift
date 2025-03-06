@@ -30,6 +30,7 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
 
     var isBaseImage: Bool { parentId == nil }
     var model: ModelSemantic = .wideAbstract
+    var extraPrompt: String
 
     public let stage: AssetStage
 
@@ -39,6 +40,7 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
         rectToBase: CGRect? = nil,
         parentId: UUID? = nil,
         stage: AssetStage? = nil,
+        extra: String,
         model: ModelSemantic,
         id: UUID? = nil
     ) {
@@ -48,6 +50,7 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
         self.id = id != nil ? id! : UUID()
         self.parentId = parentId
         self.model = model
+        self.extraPrompt = extra
         if stage == nil {
             if parentId == nil {
                 self.stage = .generatedNotUpscaled3
@@ -59,10 +62,10 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
         }
     }
 
-    init(rectToBase: CGRect, parent: ProjectAsset, model: ModelSemantic) {
+    init(rectToBase: CGRect, parent: ProjectAsset, model: ModelSemantic, _ extraPrompt: String) {
         self.init(
             image: nil, result: nil, rectToBase: rectToBase,
-            parentId: parent.id, model: model
+            parentId: parent.id, extra: extraPrompt, model: model
         )
     }
 
@@ -312,6 +315,7 @@ class AssetCollection {
             result: reg,
             parentId: asset.parentId,
             stage: .needsCrop1,
+            extra: asset.extraPrompt,
             model: asset.model,
             id: asset.id
         )

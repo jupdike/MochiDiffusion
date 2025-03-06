@@ -279,6 +279,7 @@ extension CGRect {
     var maxDim: CGFloat { max(self.width, self.height) }
     var minDim: CGFloat { min(self.width, self.height) }
     var avgDim: CGFloat { 0.5 * self.width + 0.5 * self.height }
+    var geomMeanDim: CGFloat { sqrt(self.width * self.height) }
 
     func toPathPoints() -> [CGPoint] {
         [
@@ -310,6 +311,28 @@ extension CGRect {
             height: ret.height
         )
         return ret
+    }
+
+    func vertKeepWithin(_ other: CGRect) -> CGRect {
+        var ret = self
+        // push rectangle in from either side, but keep width
+        ret = CGRect(
+            x: ret.minX,
+            y: max(other.minY, ret.minY),
+            width: ret.width,
+            height: ret.height
+        )
+        ret = CGRect(
+            x: ret.minX,
+            y: min(other.maxY - 1 - ret.width, ret.minY),
+            width: ret.width,
+            height: ret.height
+        )
+        return ret
+    }
+
+    func keepWithin(_ other: CGRect) -> CGRect {
+        self.horizKeepWithin(other).vertKeepWithin(other)
     }
 
 }

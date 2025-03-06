@@ -242,6 +242,32 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         return ret
     }
 
+    static let foreArms = [
+        (
+            VNHumanBodyPoseObservation.JointName.leftWrist,
+            VNHumanBodyPoseObservation.JointName.leftElbow
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.rightWrist,
+            VNHumanBodyPoseObservation.JointName.rightElbow
+        ),
+    ]
+
+    static func boneFind(
+        _ whiteList: [(VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName)],
+        inBones bones: [Bone]
+    ) -> [Bone] {
+        var ret: [Bone] = []
+        for bone in bones {
+            if whiteList.contains(where: {
+                bone.jointA == $0.0 && bone.jointB == $0.1
+            }) {
+                ret.append(bone)
+            }
+        }
+        return ret
+    }
+
     static let limbs = [
         (
             VNHumanBodyPoseObservation.JointName.rightShoulder,
@@ -259,10 +285,10 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             VNHumanBodyPoseObservation.JointName.leftWrist,
             VNHumanBodyPoseObservation.JointName.leftElbow
         ),
-        (
-            VNHumanBodyPoseObservation.JointName.leftElbow,
-            VNHumanBodyPoseObservation.JointName.leftShoulder
-        ),
+        //(
+        //    VNHumanBodyPoseObservation.JointName.leftElbow,
+        //    VNHumanBodyPoseObservation.JointName.leftShoulder
+        //),
         (
             VNHumanBodyPoseObservation.JointName.neck,
             VNHumanBodyPoseObservation.JointName.root
@@ -279,10 +305,10 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             VNHumanBodyPoseObservation.JointName.rightWrist,
             VNHumanBodyPoseObservation.JointName.rightElbow
         ),
-        (
-            VNHumanBodyPoseObservation.JointName.rightElbow,
-            VNHumanBodyPoseObservation.JointName.rightShoulder
-        ),
+        //(
+        //    VNHumanBodyPoseObservation.JointName.rightElbow,
+        //    VNHumanBodyPoseObservation.JointName.rightShoulder
+        //),
     ]
 
     static func computeBonesBoundingBox(_ bones: [Bone]) -> CGRect? {
@@ -408,6 +434,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 neckPoint = shoulderBox.center
             }
         }
+        //
         print("Got an image of size \(cgImage.width) x \(cgImage.height).")
         let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
         let detectFacesRequest = VNDetectFaceRectanglesRequest()
@@ -456,7 +483,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             print("Got a nil set of face landmarks")
             return emptyAnn
         }
-        var shapes = [
+        let shapes = [
             MyShape(region: face.faceContour, size: imageSize),
             MyShape(region: face.leftEye, size: imageSize),
             MyShape(region: face.rightEye, size: imageSize),
@@ -662,17 +689,25 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         // now gather up relevant rectangles
         var fShapes: [MyShape] = []
         var assets: [ProjectAsset] = []
-        let baseAsset = ProjectAsset(image: cgImage, model: .wideAbstract)
+        let baseAsset = ProjectAsset(image: cgImage, extra: "", model: .wideAbstract)
         assets.append(baseAsset)
         // corners
         fShapes.append(MyShape(points: nwRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: nwRect, parent: baseAsset, model: .wideAbstract))
+        assets.append(
+            ProjectAsset(rectToBase: nwRect, parent: baseAsset, model: .wideAbstract, "")
+        )
         fShapes.append(MyShape(points: neRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: neRect, parent: baseAsset, model: .wideAbstract))
+        assets.append(
+            ProjectAsset(rectToBase: neRect, parent: baseAsset, model: .wideAbstract, "")
+        )
         fShapes.append(MyShape(points: swRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: swRect, parent: baseAsset, model: .wideAbstract))
+        assets.append(
+            ProjectAsset(rectToBase: swRect, parent: baseAsset, model: .wideAbstract, "")
+        )
         fShapes.append(MyShape(points: seRect.toPathPoints(), classification: .openPath))
-        assets.append(ProjectAsset(rectToBase: seRect, parent: baseAsset, model: .wideAbstract))
+        assets.append(
+            ProjectAsset(rectToBase: seRect, parent: baseAsset, model: .wideAbstract, "")
+        )
         //
         var comboOrFull = baseAsset
         var belowOrFull = baseAsset
@@ -683,19 +718,19 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 )
                 assets.append(
                     ProjectAsset(
-                        rectToBase: bigBelowRect, parent: baseAsset, model: .wideAbstract
+                        rectToBase: bigBelowRect, parent: baseAsset, model: .wideAbstract, ""
                     )
                 )
             }
             fShapes.append(MyShape(points: comboRect.toPathPoints(), classification: .openPath))
             comboOrFull = ProjectAsset(
-                rectToBase: comboRect, parent: baseAsset, model: .wideAbstract
+                rectToBase: comboRect, parent: baseAsset, model: .wideAbstract, ""
             )
             assets.append(comboOrFull)
             if extraOverlapRatio < 0.5 {
                 fShapes.append(MyShape(points: extraRect.toPathPoints(), classification: .openPath))
                 let bigBelow = ProjectAsset(
-                    rectToBase: extraRect, parent: baseAsset, model: .wideAbstract
+                    rectToBase: extraRect, parent: baseAsset, model: .wideAbstract, ""
                 )
                 assets.append(bigBelow)
                 belowOrFull = bigBelow
@@ -704,35 +739,89 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         if bigEnough && overlapRatio < 0.7 {
             fShapes.append(MyShape(points: belowRect.toPathPoints(), classification: .openPath))
             assets.append(
-                ProjectAsset(rectToBase: belowRect, parent: belowOrFull, model: .wideAbstract)
+                ProjectAsset(rectToBase: belowRect, parent: belowOrFull, model: .wideAbstract, "")
             )
         }
         fShapes.append(MyShape(points: anotherRect.toPathPoints(), classification: .openPath))
         let another = ProjectAsset(
-            rectToBase: anotherRect, parent: comboOrFull, model: .wideAbstract
+            rectToBase: anotherRect, parent: comboOrFull, model: .wideAbstract, ""
         )
         assets.append(another)
 
         fShapes.append(MyShape(points: leftRect.toPathPoints(), classification: .openPath))
         assets.append(
-            ProjectAsset(rectToBase: leftRect, parent: another, model: .wideAbstract)
+            ProjectAsset(rectToBase: leftRect, parent: another, model: .wideAbstract, "")
         )
         fShapes.append(MyShape(points: rightRect.toPathPoints(), classification: .openPath))
         assets.append(
-            ProjectAsset(rectToBase: rightRect, parent: another, model: .wideAbstract)
+            ProjectAsset(rectToBase: rightRect, parent: another, model: .wideAbstract, "")
         )
+        // find hands (forearm with wrist)
+        let forearms = boneFind(foreArms, inBones: limbs)
+        print("Found \(forearms.count) forearm bones")
+        for forearm in forearms {
+            let wr = forearm.pointA
+            let el = forearm.pointB
+            let wrist = CGPoint(
+                x: wr.x,
+                y: imageSize.height - 1 - wr.y
+            )
+            let elbow = CGPoint(
+                x: el.x,
+                y: imageSize.height - 1 - el.y
+            )
+            let dx = wrist.x - elbow.x
+            let dy = wrist.y - elbow.y
+            let squareDim = sqrt(dx * dx + dy * dy) * 1.2
+            // add a biggish rectangle where the hand might be
+            let bigHandRect = CGRect(
+                x: wrist.x - squareDim * 0.5,
+                y: wrist.y - squareDim * 0.5,
+                width: squareDim,
+                height: squareDim
+            ).keepWithin(baseRect)  // ensure rect does not go off the edge
+            fShapes.append(MyShape(points: bigHandRect.toPathPoints(), classification: .openPath))
+            let bigHandAsset =
+                ProjectAsset(
+                    rectToBase: bigHandRect,
+                    parent: baseAsset,
+                    model: .wideAbstract,
+                    "hand"
+                )
+            assets.append(bigHandAsset)
+            // add another more zoomed one
+            let extended = CGPoint(
+                x: wrist.x + dx * 0.75,
+                y: wrist.y + dy * 0.75
+            )
+            let smallHandRect = CGRect(
+                x: extended.x - smallFaceRect.width * 0.8,
+                y: extended.y - smallFaceRect.height * 0.8,
+                width: smallFaceRect.width * 1.6,
+                height: smallFaceRect.height * 1.6
+            ).keepWithin(bigHandRect)
+            fShapes.append(MyShape(points: smallHandRect.toPathPoints(), classification: .openPath))
+            let smallHandAsset =
+                ProjectAsset(
+                    rectToBase: smallHandRect, parent: bigHandAsset, model: .wideAbstract, "hand"
+                )
+            assets.append(smallHandAsset)
+        }
+        //
+        // TODO do the same thing with feet / shoes / heels
+        //
         fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
         let head1 = ProjectAsset(
-            rectToBase: headRect, parent: comboOrFull, model: .wideAbstract
+            rectToBase: headRect, parent: comboOrFull, model: .wideAbstract, "!"
         )
         assets.append(head1)
         let head2 = ProjectAsset(
-            rectToBase: headRect, parent: comboOrFull, model: .narrowLiteral
+            rectToBase: headRect, parent: comboOrFull, model: .narrowLiteral, "!"
         )
         assets.append(head2)
         fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
         let faceAsset = ProjectAsset(
-            rectToBase: finalRect, parent: head2, model: .narrowLiteral
+            rectToBase: finalRect, parent: head2, model: .narrowLiteral, "!"
         )
         assets.append(faceAsset)
         // TODO could use it but disallow scaling? So asset is there but optional,
@@ -740,7 +829,12 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         if shouldUseSmallestFace {
             fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
             assets.append(
-                ProjectAsset(rectToBase: smallFaceRect, parent: faceAsset, model: .tightLiteral)
+                ProjectAsset(
+                    rectToBase: smallFaceRect,
+                    parent: faceAsset,
+                    model: .tightLiteral,
+                    "!"
+                )
             )
         }
         return ImageAnnotations(

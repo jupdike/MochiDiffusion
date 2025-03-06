@@ -248,20 +248,38 @@ class ProjectTask {
             rectToBase: nil,
             parentId: asset.parentId,
             stage: .cropScaled2,
+            extra: asset.extraPrompt,
             model: asset.model,
             id: asset.id
         )
     }
 
-    func doGenerate(image: CGImage) async -> CGImage? {
+    let bracedRegex: Regex = /\{[^}]+\}/
+
+    func combinePromptWithExtra(_ extra: String) -> String {
+        if extra == "!" {
+            // just remove region-specific string
+            return prompt.replacing(bracedRegex, with: "")
+        } else if extra != "" {
+            // replace region-specific string with extra
+            return prompt.replacing(bracedRegex, with: extra)
+        } else {
+            // no matter what, get rid of braces
+            return prompt.replacing("{", with: "").replacing("}", with: "")
+        }
+    }
+
+    func doGenerate(image: CGImage, _ extra: String) async -> CGImage? {
         let controller = await ImageController.shared
         await controller.setStartingImage(image: image)
         await logMessage("(\(i)/\(n)) Img2img")
         let uuid = UUID()
+        let newPrompt = combinePromptWithExtra(extra)
+        //print("newPrompt:\n\(newPrompt)\n---\n")
         await controller.generate1(
             folderPath, "\(uuid)",
             overrideStrength: strength,
-            overridePrompt: prompt,
+            overridePrompt: newPrompt,
             overrideNegativePrompt: negativePrompt
         )
         // load the image and return it so it can possibly be used as input
@@ -278,13 +296,14 @@ class ProjectTask {
             return asset  // eek, nothing to do? could cause an infinite loop
         }
         await ImageController.shared.setModel(asset.model)
-        let maybeCgi = await doGenerate(image: image)
+        let maybeCgi = await doGenerate(image: image, asset.extraPrompt)
         return ProjectAsset(
             image: maybeCgi,
             result: asset.result,
             rectToBase: nil,
             parentId: asset.parentId,
             stage: .generatedNotUpscaled3,
+            extra: asset.extraPrompt,
             model: asset.model,
             id: asset.id
         )
