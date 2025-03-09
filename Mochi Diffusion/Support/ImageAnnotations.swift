@@ -253,6 +253,17 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         ),
     ]
 
+    static let foreLegs = [
+        (
+            VNHumanBodyPoseObservation.JointName.leftAnkle,
+            VNHumanBodyPoseObservation.JointName.leftKnee
+        ),
+        (
+            VNHumanBodyPoseObservation.JointName.rightAnkle,
+            VNHumanBodyPoseObservation.JointName.rightKnee
+        ),
+    ]
+
     static func boneFind(
         _ whiteList: [(VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName)],
         inBones bones: [Bone]
@@ -788,32 +799,105 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 width: squareDim,
                 height: squareDim
             ).keepWithin(baseRect)  // ensure rect does not go off the edge
-            fShapes.append(MyShape(points: bigHandRect.toPathPoints(), classification: .openPath))
-            let bigHandAsset =
-                ProjectAsset(
-                    rectToBase: bigHandRect,
-                    parent: baseAsset,
-                    model: .wideAbstract,
-                    "hand"
+            if bigHandRect.width >= smallFaceRect.width {
+                fShapes.append(
+                    MyShape(
+                        points: bigHandRect.toPathPoints(),
+                        classification: .openPath
+                    )
                 )
-            assets.append(bigHandAsset)
-            // add another more zoomed one
-            let smallHandRect = CGRect(
-                x: extended2.x - smallFaceRect.width * 0.8,
-                y: extended2.y - smallFaceRect.height * 0.8,
-                width: smallFaceRect.width * 1.6,
-                height: smallFaceRect.height * 1.6
-            ).keepWithin(bigHandRect)
-            fShapes.append(MyShape(points: smallHandRect.toPathPoints(), classification: .openPath))
-            let smallHandAsset =
-                ProjectAsset(
-                    rectToBase: smallHandRect, parent: bigHandAsset, model: .wideAbstract, "hand"
-                )
-            assets.append(smallHandAsset)
+                let bigHandAsset =
+                    ProjectAsset(
+                        rectToBase: bigHandRect,
+                        parent: baseAsset,
+                        model: .wideAbstract,
+                        "hand"
+                    )
+                assets.append(bigHandAsset)
+                // add another more zoomed one
+                let smallHandRect = CGRect(
+                    x: extended2.x - smallFaceRect.width * 0.8,
+                    y: extended2.y - smallFaceRect.height * 0.8,
+                    width: smallFaceRect.width * 1.6,
+                    height: smallFaceRect.height * 1.6
+                ).keepWithin(bigHandRect)
+                // don't mess with the scale by adding some weird tiny rectangle
+                if smallHandRect.width >= smallFaceRect.width {
+                    fShapes.append(
+                        MyShape(
+                            points: smallHandRect.toPathPoints(),
+                            classification: .openPath)
+                    )
+                    let smallHandAsset =
+                        ProjectAsset(
+                            rectToBase: smallHandRect,
+                            parent: bigHandAsset,
+                            model: .wideAbstract, "hand"
+                        )
+                    assets.append(smallHandAsset)
+                }
+            }
         }
         //
-        // TODO do the same thing with feet / shoes / heels
-        //
+        // do the same thing with feet / shoes / heels
+        // find hands (forearm with wrist)
+        let footStr = "foot"  // TODO let user set this in UI
+        let forelegs = boneFind(foreLegs, inBones: limbs)
+        print("Found \(forelegs.count) forelegs bones")
+        for foreleg in forelegs {
+            let ank = foreleg.pointA
+            let kne = foreleg.pointB
+            let ankle = CGPoint(
+                x: ank.x,
+                y: imageSize.height - 1 - ank.y
+            )
+            let knee = CGPoint(
+                x: kne.x,
+                y: imageSize.height - 1 - kne.y
+            )
+            let dx = ankle.x - knee.x
+            let dy = ankle.y - knee.y
+            let squareDim = sqrt(dx * dx + dy * dy) * 1.2
+            // add a biggish rectangle where the hand might be
+            let extended1 = CGPoint(
+                x: ankle.x + dx * 0.3,
+                y: ankle.y + dy * 0.3
+            )
+            let extended2 = CGPoint(
+                x: ankle.x + dx * 0.6,
+                y: ankle.y + dy * 0.6
+            )
+            let bigFootRect = CGRect(
+                x: extended1.x - squareDim * 0.5,
+                y: extended1.y - squareDim * 0.5,
+                width: squareDim,
+                height: squareDim
+            ).keepWithin(baseRect)  // ensure rect does not go off the edge
+            fShapes.append(MyShape(points: bigFootRect.toPathPoints(), classification: .openPath))
+            let bigFootAsset =
+                ProjectAsset(
+                    rectToBase: bigFootRect,
+                    parent: baseAsset,
+                    model: .wideAbstract,
+                    footStr
+                )
+            assets.append(bigFootAsset)
+            // add another more zoomed one
+            let smallFootDim = squareDim * 0.8
+            let smallFootRect = CGRect(
+                x: extended2.x - smallFootDim * 0.5,
+                y: extended2.y - smallFootDim * 0.5,
+                width: smallFootDim,
+                height: smallFootDim
+            ).keepWithin(bigFootRect)
+            fShapes.append(MyShape(points: smallFootRect.toPathPoints(), classification: .openPath))
+            let smallFootAsset =
+                ProjectAsset(
+                    rectToBase: smallFootRect, parent: bigFootAsset, model: .wideAbstract, footStr
+                )
+            assets.append(smallFootAsset)
+        }
+        // done with any foot
         fShapes.append(MyShape(points: headRect.toPathPoints(), classification: .openPath))
         let head1 = ProjectAsset(
             rectToBase: headRect, parent: comboOrFull, model: .wideAbstract, "!"
