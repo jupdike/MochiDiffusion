@@ -48,6 +48,11 @@ struct ProjectView: View {
                 Text("Failed to load image")
             }
         }
+        .navigationSubtitle(
+            store.projectController != nil
+                ? store.projectController!.currentScale
+                : ""
+        )
     }
 
     func getZStack(_ anns: ImageAnnotations) -> some View {

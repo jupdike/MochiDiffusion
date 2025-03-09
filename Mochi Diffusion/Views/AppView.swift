@@ -43,15 +43,7 @@ struct MyToolbar: ViewModifier {
             }
         } else {
             content.toolbar {
-                ToolbarItem(placement: .navigation) {
-                    ProjectToolbarLeft()
-                }
-                ToolbarItem(placement: .principal) {
-                    ProjectToolbarCenter()
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    ProjectToolbarRight()
-                }
+                ProjectToolbar()
             }
         }
     }
