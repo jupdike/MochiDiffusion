@@ -305,7 +305,7 @@ extension CGRect {
             height: ret.height
         )
         ret = CGRect(
-            x: min(other.maxX - 1 - ret.width, ret.minX),
+            x: min(other.maxX - ret.width, ret.minX),
             y: ret.minY,
             width: ret.width,
             height: ret.height
@@ -324,7 +324,7 @@ extension CGRect {
         )
         ret = CGRect(
             x: ret.minX,
-            y: min(other.maxY - 1 - ret.width, ret.minY),
+            y: min(other.maxY - ret.width, ret.minY),
             width: ret.width,
             height: ret.height
         )
