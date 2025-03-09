@@ -63,12 +63,18 @@ struct ProjectToolbar: View {
         .toggleStyle(CheckboxToggleStyle())
         .padding()
 
+        Toggle(isOn: $controller.shouldMakePSD) {
+            Text("Export PSD")
+        }
+        .toggleStyle(CheckboxToggleStyle())
+        .padding()
+
         Button {
             guard let sdi = store.selected() else { return }
             print("path to selected image: \(sdi.path)")
             if let project = store.projectController {
                 project.enqueueProjectTask(
-                    shouldExportPSD: true,
+                    shouldExportPSD: controller.shouldMakePSD,
                     strength: controller.strength,
                     prompt: controller.prompt,
                     negativePrompt: controller.negativePrompt

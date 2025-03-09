@@ -17,6 +17,7 @@ struct Bone {
 struct AnnotationOptions {
     let shouldUseSmallestFace: Bool
     let footStr: String
+    let shouldMakePSD: Bool
 }
 
 struct MyShape: Hashable, Equatable, Identifiable {

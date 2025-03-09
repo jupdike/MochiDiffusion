@@ -109,6 +109,9 @@ final class ImageController: ObservableObject {
     public var shouldUseSmallestFace: Bool = false
 
     @Published
+    public var shouldMakePSD: Bool = true
+
+    @Published
     public var footStr: String = "foot"
 
     @Published

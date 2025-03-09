@@ -14,7 +14,7 @@ class ProjectTask {
     var strength: Double = 0.5
     var prompt = ""
     var negativePrompt = ""
-    var shouldExportPSD = true
+    var shouldExportPSD: Bool
 
     init(
         path: String,
@@ -34,6 +34,7 @@ class ProjectTask {
             store: store
         )
         self.assetCollection.assets = self.assetCollection.stage0to1()
+        self.shouldExportPSD = options.shouldMakePSD
     }
 
     private func writeOneAssetTo(psdWriter w: PSDWriter, asset: ProjectAsset) async {
@@ -137,11 +138,11 @@ class ProjectTask {
         for asset in assets {
             let trueScale = assetCollection.getTrueScale(asset: asset)
             let tsStr = String(format: "%1.2f", trueScale)
-            await logMessage("(\(count)/\(total)) Upscaling \(tsStr)x...")
+            await logMessage("(\(count)/\(total)) Upscaling \(tsStr)x")
             await writeOneAssetTo(psdWriter: w, asset: asset)
             count += 1
         }
-        await logMessage("Exporting...")
+        await logMessage("Exporting")
         let out = "\(tmpFolder)IMG.psd"
         let outputUrl = URL(fileURLWithPath: out)
         await writeToUrl(psdWriter: w, toUrl: outputUrl)

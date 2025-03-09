@@ -81,7 +81,11 @@ struct ImageCommands: Commands {
                     )
                 }
                 .keyboardShortcut(.rightArrow, modifiers: [])
-                .disabled(store.images.isEmpty || focusController.isTextFieldFocused)
+                .disabled(
+                    !store.showMain
+                        || store.images.isEmpty
+                        || focusController.isTextFieldFocused
+                )
 
                 Button {
                     Task { await ImageController.shared.selectPrevious() }
@@ -92,7 +96,11 @@ struct ImageCommands: Commands {
                     )
                 }
                 .keyboardShortcut(.leftArrow, modifiers: [])
-                .disabled(store.images.isEmpty || focusController.isTextFieldFocused)
+                .disabled(
+                    !store.showMain
+                        || store.images.isEmpty
+                        || focusController.isTextFieldFocused
+                )
             }
             Section {
                 Button {
@@ -109,7 +117,8 @@ struct ImageCommands: Commands {
                                 options:
                                     AnnotationOptions(
                                         shouldUseSmallestFace: controller.shouldUseSmallestFace,
-                                        footStr: controller.footStr
+                                        footStr: controller.footStr,
+                                        shouldMakePSD: controller.shouldMakePSD
                                     )
                             )
                         } else {
