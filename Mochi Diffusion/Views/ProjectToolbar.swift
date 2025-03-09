@@ -58,6 +58,8 @@ struct ProjectToolbarRight: View {
         HStack {
             Spacer(minLength: 40)
 
+            TextField("foot", text: $controller.footStr)
+
             Toggle(isOn: $controller.shouldUseSmallestFace) {
                 Text("Small Face")
             }

@@ -66,7 +66,7 @@ public class MDProjectController {
         store: ImageStore,
         controller: ImageController,
         generator: ImageGenerator,
-        shouldUseSmallestFace: Bool
+        options: AnnotationOptions
     ) {
         self.store = store
         self.controller = controller
@@ -78,7 +78,7 @@ public class MDProjectController {
             path: path,
             cgImage: cgImage,
             store: store,
-            shouldUseSmallestFace: shouldUseSmallestFace
+            options: options
         )
         store.projectController = self
         self.setMaxScale()

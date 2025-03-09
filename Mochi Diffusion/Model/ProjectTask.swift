@@ -20,12 +20,12 @@ class ProjectTask {
         path: String,
         cgImage: CGImage,
         store: ImageStore,
-        shouldUseSmallestFace: Bool
+        options: AnnotationOptions
     ) {
         self.store = store
         self.anns = ImageAnnotations.find(
             inImage: cgImage,
-            shouldUseSmallestFace: shouldUseSmallestFace
+            options: options
         )
         self.folderPath = MDProjectController.imagePathToProjectFolder(path)
         self.assetCollection = AssetCollection(

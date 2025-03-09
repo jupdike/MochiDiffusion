@@ -14,6 +14,11 @@ struct Bone {
     let pointB: CGPoint
 }
 
+struct AnnotationOptions {
+    let shouldUseSmallestFace: Bool
+    let footStr: String
+}
+
 struct MyShape: Hashable, Equatable, Identifiable {
     let points: [CGPoint]
     let pointsClassification: VNPointsClassification
@@ -400,7 +405,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
 
     static func find(
         inImage cgImage: CGImage,
-        shouldUseSmallestFace: Bool
+        options: AnnotationOptions
     ) -> ImageAnnotations {
         let emptyShapes: [MyShape] = []  // empty shape list for error situation
         let emptyAnn: ImageAnnotations = ImageAnnotations(
@@ -841,7 +846,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         //
         // do the same thing with feet / shoes / heels
         // find hands (forearm with wrist)
-        let footStr = "foot"  // TODO let user set this in UI
+        let footStr = options.footStr
         let forelegs = boneFind(foreLegs, inBones: limbs)
         print("Found \(forelegs.count) forelegs bones")
         for foreleg in forelegs {
@@ -914,7 +919,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         assets.append(faceAsset)
         // TODO could use it but disallow scaling? So asset is there but optional,
         // and if removed larger face is not blurry
-        if shouldUseSmallestFace {
+        if options.shouldUseSmallestFace {
             fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
             assets.append(
                 ProjectAsset(

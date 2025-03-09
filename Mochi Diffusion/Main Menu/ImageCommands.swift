@@ -106,7 +106,11 @@ struct ImageCommands: Commands {
                                 store: store,
                                 controller: controller,
                                 generator: generator,
-                                shouldUseSmallestFace: controller.shouldUseSmallestFace
+                                options:
+                                    AnnotationOptions(
+                                        shouldUseSmallestFace: controller.shouldUseSmallestFace,
+                                        footStr: controller.footStr
+                                    )
                             )
                         } else {
                             store.projectController = nil
