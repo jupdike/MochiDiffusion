@@ -828,7 +828,9 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                     height: smallFaceRect.height * 1.6
                 ).keepWithin(bigHandRect)
                 // don't mess with the scale by adding some weird tiny rectangle
-                if smallHandRect.width >= smallFaceRect.width {
+                if smallHandRect.width >= smallFaceRect.width
+                    && smallHandRect.width <= bigHandRect.width
+                {
                     fShapes.append(
                         MyShape(
                             points: smallHandRect.toPathPoints(),
