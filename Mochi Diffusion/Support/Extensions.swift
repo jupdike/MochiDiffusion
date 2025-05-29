@@ -93,7 +93,7 @@ extension String {
         return cgImage
     }
 
-    // filters lines starting with # and empty lines
+    // filters lines starting withp # and empty lines
     func contensOfFileAsLines() -> [String] {
         var all = ""
         do {

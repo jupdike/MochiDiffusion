@@ -49,8 +49,10 @@ struct ProjectToolbar: View {
             }
         }
 
+        Spacer(minLength: 10)
+
         Text(controller.projectStatusMessage)
-            .frame(height: 120)
+            .frame(minWidth: 160)
 
         Spacer()
 

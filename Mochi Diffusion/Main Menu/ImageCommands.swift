@@ -43,7 +43,7 @@ struct ImageCommands: Commands {
                         comment: "Button to enqueue text file as series of prompts"
                     )
                 }
-                .keyboardShortcut("E", modifiers: .command)
+                .keyboardShortcut("T", modifiers: .command)
                 .disabled(controller.modelName.isEmpty)
                 Button {
                     Task {
@@ -68,7 +68,7 @@ struct ImageCommands: Commands {
                         comment: "Button to generate the same img2img over and over"
                     )
                 }
-                .keyboardShortcut("T", modifiers: .command)
+                .keyboardShortcut("R", modifiers: .command)
                 .disabled(controller.modelName.isEmpty)
             }
             Section {
@@ -157,7 +157,7 @@ struct ImageCommands: Commands {
                         comment: "Set the current image as the starting image for img2img"
                     )
                 }
-                .keyboardShortcut("2", modifiers: .command)
+                .keyboardShortcut("E", modifiers: .command)
                 .disabled(store.selected() == nil)
 
                 Button {
