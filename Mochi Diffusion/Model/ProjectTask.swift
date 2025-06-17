@@ -259,11 +259,12 @@ class ProjectTask {
 
     func combinePromptWithExtra(_ extra: String) -> String {
         if extra == "!" {
-            // just remove region-specific string
+            // just remove region-specific string areas
             return prompt.replacing(bracedRegex, with: "")
         } else if extra != "" {
-            // replace region-specific string with extra
-            return prompt.replacing(bracedRegex, with: extra)
+            // first remove region-specific string areas, then
+            // append a comma and the extra prompt material
+            return prompt.replacing(bracedRegex, with: "").appending(", \(extra)")
         } else {
             // no matter what, get rid of braces
             return prompt.replacing("{", with: "").replacing("}", with: "")
