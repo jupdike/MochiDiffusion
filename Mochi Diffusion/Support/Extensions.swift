@@ -462,6 +462,10 @@ extension String {
     func trunc(length: Int, trailing: String = "…") -> String {
         return (self.count > length) ? self.prefix(length) + trailing : self
     }
+    func getFileName() -> String {
+        let split = self.split(by: "/")
+        return split.last ?? ""
+    }
 }
 
 // from https://dev.to/arnavmotwani/handling-persistent-data-in-swiftui-2-0-with-json-1h7

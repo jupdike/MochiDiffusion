@@ -35,7 +35,22 @@ class NestedPromptColumn {
                 let ps = stripped.split(by: ",")
                     .map { $0.trimmingCharacters(in: CharacterSet.whitespaces) }
                 // check that each file exists so we don't crash on a missing image, but after the fact!
-                column.imageFiles = ps.map { "\(columnsFolderPath)\($0)" }
+                if stripped.hasSuffix("*") && ps.count == 1 {
+                    // filename globbing
+                    let filePrefix = stripped.replacingOccurrences(of: "*", with: "")
+                    if let files: [String] =
+                        try? FileManager.default.contentsOfDirectory(atPath: columnsFolderPath)
+                    {
+                        column.imageFiles = files.filter { $0.getFileName().hasPrefix(filePrefix) }
+                            .map { "\(columnsFolderPath)/\($0)" }
+                        print("Found \(column.imageFiles.count) image files")
+                    } else {
+                        print("Problem interpreting filename glob for \(stripped)")
+                    }
+                } else {
+                    // normal files
+                    column.imageFiles = ps.map { "\(columnsFolderPath)\($0)" }
+                }
                 for fname in column.imageFiles {
                     if !FileManager.default.fileExists(atPath: fname) {
                         print("Could not find file: \(fname)")

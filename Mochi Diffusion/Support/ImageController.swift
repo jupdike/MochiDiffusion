@@ -529,7 +529,7 @@ final class ImageController: ObservableObject {
         let colPrompts: [NestedPromptColumn] =
             NestedPromptColumn.fromLines("\(self.imageDir)/../columns/")
         guard colPrompts.count != 0 else {
-            print("Expected properly formed and properly parsed columns array")
+            print("Expected properly formed and properly parsed columns array of length >= 1")
             return
         }
         //
