@@ -522,7 +522,10 @@ final class ImageController: ObservableObject {
 
     func enqueueNested() async {
         let rowsFile = "\(self.imageDir)/../rows.txt"
-        var rowPrompts = rowsFile.contensOfFileAsLines()
+        var rowPrompts = rowsFile.contensOfFileAsLines().filter(
+            // filter out comments
+            { !$0.hasSuffix("#") && $0.trimmingCharacters(in: CharacterSet.whitespaces) != "" }
+        )
         // Shuffle, so we can run a batch and stop and get different results. Nice.
         rowPrompts.shuffle()
         //
