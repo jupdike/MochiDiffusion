@@ -12,6 +12,7 @@ struct GalleryView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(ImageGenerator.self) private var generator: ImageGenerator
     @Environment(ImageStore.self) private var store: ImageStore
+    @EnvironmentObject private var coordinator: GalleryCoordinator
 
     private let gridColumns = [GridItem(.adaptive(minimum: 200), spacing: 16)]
 
@@ -42,7 +43,19 @@ struct GalleryView: View {
                 )
         )
         .navigationSubtitle("\(store.images.count) image(s)")
+        .onChange(of: coordinator.scrollToId) { _, newValue in
+            print("triggered a request to scroll to selected")
+            if let id = newValue {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    scrollProxy?.scrollTo(id, anchor: .center)
+                }
+                // clear after use
+                coordinator.scrollToId = nil
+            }
+        }
     }
+
+    @State private var scrollProxy: ScrollViewProxy?
 
     @ViewBuilder
     private var galleryView: some View {
@@ -64,8 +77,9 @@ struct GalleryView: View {
                         }
                     }
 
-                    ForEach(store.images) { sdi in
+                    ForEach(store.images, id: \.id) { sdi in
                         GalleryItemView(sdi: sdi)
+                            .id(sdi.id)
                             .accessibilityAddTraits(.isButton)
                             .transition(.galleryItemTransition)
                             .onChange(of: store.selected()) {
@@ -137,6 +151,10 @@ struct GalleryView: View {
                     }
                 }
                 .padding()
+            }
+            .onAppear {
+                // Store the proxy so we can use it later, for scrolling directly to an image
+                scrollProxy = proxy
             }
         }
     }
@@ -305,6 +323,15 @@ struct GalleryView: View {
                 }
             }
         }
+    }
+}
+
+class GalleryCoordinator: ObservableObject {
+    static let shared = GalleryCoordinator()
+    @Published var scrollToId: UUID? = nil
+    private init() {}
+    func scrollTo(_ id: UUID) {
+        scrollToId = id
     }
 }
 

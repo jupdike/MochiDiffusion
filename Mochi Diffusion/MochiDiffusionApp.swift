@@ -17,6 +17,7 @@ struct MochiDiffusionApp: App {
     @State private var store: ImageStore
     @State private var focusCon: FocusController
     @State private var notificationController: NotificationController
+    @State private var galleryCoordinator: GalleryCoordinator
     private let updaterController: SPUStandardUpdaterController
 
     init() {
@@ -25,6 +26,7 @@ struct MochiDiffusionApp: App {
         self._store = .init(wrappedValue: .shared)
         self._focusCon = .init(wrappedValue: .shared)
         self._notificationController = .init(wrappedValue: .shared)
+        self._galleryCoordinator = .init(wrappedValue: .shared)
 
         updaterController = SPUStandardUpdaterController(
             startingUpdater: true,
@@ -37,6 +39,7 @@ struct MochiDiffusionApp: App {
         Window("Mochi Diffusion", id: "main") {
             AppView()
                 .environmentObject(controller)
+                .environmentObject(galleryCoordinator)
                 .environment(generator)
                 .environment(store)
                 .environment(focusCon)
@@ -67,7 +70,10 @@ struct MochiDiffusionApp: App {
             FileCommands(store: store)
             SidebarCommands()
             ImageCommands(
-                controller: controller, generator: generator, store: store,
+                controller: controller,
+                galleryCoordinator: galleryCoordinator,
+                generator: generator,
+                store: store,
                 focusController: focusCon)
             HelpCommands()
         }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ImageCommands: Commands {
     @ObservedObject var controller: ImageController
+    @ObservedObject var galleryCoordinator: GalleryCoordinator
     var generator: ImageGenerator
     var store: ImageStore
     var focusController: FocusController
@@ -33,6 +34,17 @@ struct ImageCommands: Commands {
                 }
                 .keyboardShortcut("G", modifiers: .command)
                 .disabled(controller.modelName.isEmpty)
+                Button {
+                    if let selectedId = ImageStore.shared.selectedId {
+                        galleryCoordinator.scrollTo(selectedId)
+                    }
+                } label: {
+                    Text(
+                        "Scroll to Selected",
+                        comment: "Scroll up or down to selected image so it is visible in gallery"
+                    )
+                }
+                .keyboardShortcut("L", modifiers: .command)
                 Button {
                     Task {
                         await ImageController.shared.enqueueText()
