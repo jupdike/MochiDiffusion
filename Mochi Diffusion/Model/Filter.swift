@@ -26,7 +26,7 @@ struct Filter: Identifiable, Equatable {
 }
 
 enum FilterElement: String, CaseIterable {
-    case tagColor = "Tag Color"
+    case tagColor = "Tag"
     case prompt = "Prompt"
     case seed = "Seed"
     case negativePrompt = "Negative Prompt"
