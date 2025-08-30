@@ -50,7 +50,7 @@ struct FilterTagView: View {
             }
             .buttonStyle(.plain)
 
-            Text("\(filter.condition == .isEqual ? "" : "≠ ")\"\(filter.text)\"")
+            Text("\(filter.condition == .isEqual ? "" : "≠ ")\(filter.text)")
                 .padding(.horizontal, 4)
                 .frame(maxHeight: .infinity)
                 .background(isSelected ? Color.gray : Color.gray.opacity(0.3))

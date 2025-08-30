@@ -202,9 +202,27 @@ enum ImagesSortType: String {
     }
 }
 
+extension Array {
+    func anySatisfy(_ predicate: (Element) throws -> Bool) rethrows -> Bool {
+        for element in self {
+            if try predicate(element) {
+                return true
+            }
+        }
+        return false
+    }
+}
+
 extension Array where Element == SDImage {
     fileprivate func filter(_ filters: [Filter]) -> [SDImage] {
-        self.filter { image in
+        if filters.allSatisfy({ $0.element == .tagColor }) {
+            // change to OR instead of AND, as below
+            return self.filter { image in
+                filters.anySatisfy({ $0.validate(image) })
+            }
+        }
+        // normal case for multiple Filters is AND
+        return self.filter { image in
             filters.allSatisfy({ $0.validate(image) })
         }
     }

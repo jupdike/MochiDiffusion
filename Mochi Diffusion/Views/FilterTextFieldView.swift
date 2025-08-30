@@ -62,9 +62,35 @@ struct FilterTextFieldView: View {
     }
 
     private func addFilter() {
-        let trimmedText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        var trimmedText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedText.isEmpty {
-            let newTag = Filter(text: trimmedText)
+            var newTag = Filter(text: trimmedText)
+            //
+            var invertWanted = false
+            if trimmedText.lowercased().hasPrefix("not ") {
+                invertWanted = true
+                trimmedText = String(trimmedText.dropFirst(4))
+            }
+            if trimmedText.lowercased() == "clear" {
+                newTag = Filter(text: "[]", tagColor: .clear, element: .tagColor)
+            } else if trimmedText.lowercased() == "red" {
+                newTag = Filter(text: "❤️", tagColor: .red, element: .tagColor)
+            } else if trimmedText.lowercased() == "orange" {
+                newTag = Filter(text: "🔥", tagColor: .orange, element: .tagColor)
+            } else if trimmedText.lowercased() == "yellow" {
+                newTag = Filter(text: "⭐️", tagColor: .yellow, element: .tagColor)
+            } else if trimmedText.lowercased() == "green" {
+                newTag = Filter(text: "🍀", tagColor: .green, element: .tagColor)
+            } else if trimmedText.lowercased() == "blue" {
+                newTag = Filter(text: "💎", tagColor: .blue, element: .tagColor)
+            } else if trimmedText.lowercased() == "purple" {
+                newTag = Filter(text: "🦄", tagColor: .purple, element: .tagColor)
+            } else if trimmedText.lowercased() == "gray" {
+                newTag = Filter(text: "☑️", tagColor: .gray, element: .tagColor)
+            }
+            if invertWanted {
+                newTag = newTag.invertedCondition()
+            }
             filters.append(newTag)
             inputText = ""
         }
