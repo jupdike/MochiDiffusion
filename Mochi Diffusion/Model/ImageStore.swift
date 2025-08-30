@@ -26,6 +26,50 @@ enum ImagesSortType: String {
     }
     public var projectController: MDProjectController? = nil
 
+    func autoEnqueueProjects() async {
+        let controller = await ImageController.shared
+        let generator = ImageGenerator.shared
+        let colPrompts: [NestedPromptColumn] =
+            await NestedPromptColumn.fromLines("\(controller.imageDir)/../columns/")
+        guard colPrompts.count != 0 else {
+            print("Expected properly formed and properly parsed columns array of length >= 1")
+            return
+        }
+        print("want to auto-enqueue \(self.images.count) projects")
+        print("using \(colPrompts.count) columns as reference for modifying prompts")
+        for sdi in images {
+            await controller.select(sdi.id)
+            var modifiedPrompt = sdi.prompt
+            for nestedPromptColumn in colPrompts {
+                modifiedPrompt = nestedPromptColumn.tryModify(prompt: modifiedPrompt)
+            }
+            //print("want to modify prompt: \(modifiedPrompt)")
+            await ImageController.shared.copyToPrompt(sdi)
+            guard let cgi = sdi.image else { continue }
+            self.projectController = await MDProjectController(
+                path: sdi.path,
+                cgImage: cgi,
+                store: self,
+                controller: controller,
+                generator: generator,
+                options:
+                    AnnotationOptions(
+                        shouldUseSmallestFace: controller.shouldUseSmallestFace,
+                        footStr: controller.footStr,
+                        shouldMakePSD: controller.shouldMakePSD
+                    )
+            )
+            if let project = self.projectController {
+                await project.enqueueProjectTask(
+                    shouldExportPSD: controller.shouldMakePSD,
+                    strength: controller.strength,
+                    prompt: modifiedPrompt,
+                    negativePrompt: sdi.negativePrompt
+                )
+            }
+        }
+    }
+
     private var allImages: [SDImage] = [] {
         @MainActor
         didSet {

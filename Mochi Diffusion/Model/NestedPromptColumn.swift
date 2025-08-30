@@ -9,8 +9,40 @@ class NestedPromptColumn {
     var strengthMin: Double = 0.0
     var strengthMax: Double = 0.0
     var prompt: String = ""
+    var origPrompt: String = ""
     var negativePrompt: String = ""
     var imageFiles: [String] = []
+
+    // take an outputted prompt and try to put curly braces back in for Project use
+    func tryModify(prompt: String) -> String {
+        if prompt.contains(where: { c in c == "{" || c == "}" }) {
+            // already done, some other column already modified this prompt to be viable
+            return prompt
+        }
+        let str =
+            self.prompt
+            .replacingOccurrences(of: "$", with: "(.+)")
+        if let regex: Regex = try? Regex(str) {
+            //print("got a regex to test with")
+            if let match = try? regex.wholeMatch(in: prompt) {
+                let entireMatch = String(match.0)  // entire match
+                let firstCapture = match.output[1]
+                if let sub = firstCapture.substring {
+                    let captureMatch = String(sub)
+                    //print("*** Got a match, esp. capture: \(captureMatch)")
+                    let reverseEngineered = prompt.replacingOccurrences(of: captureMatch, with: "$")
+                    if reverseEngineered == self.prompt {
+                        let modifiedPrompt = self.origPrompt.replacingOccurrences(
+                            of: "$", with: captureMatch
+                        )
+                        print("*** Successfully reverse engineered! \(modifiedPrompt)")
+                        return modifiedPrompt
+                    }
+                }
+            }
+        }
+        return prompt
+    }
 
     static func fromLines(
         _ columnsFolderPath: String
@@ -59,8 +91,13 @@ class NestedPromptColumn {
                 }
                 isFirst = false
             } else if line.starts(with: "+") {
+                column.origPrompt = line.trimmingPrefix("+")
+                    .trimmingCharacters(in: CharacterSet.whitespaces)
                 column.prompt =
-                    line.trimmingPrefix("+").trimmingCharacters(in: CharacterSet.whitespaces)
+                    line.trimmingPrefix("+")
+                    .trimmingCharacters(in: CharacterSet.whitespaces)
+                    .replacingOccurrences(of: "{", with: "")
+                    .replacingOccurrences(of: "}", with: "")
                 if !column.prompt.contains("$") {
                     print("Expected all prompts in columns/index.txt to have ")
                     return []

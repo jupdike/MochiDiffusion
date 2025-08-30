@@ -87,7 +87,7 @@ struct ProjectToolbar: View {
         } label: {
             Text(
                 "Enqueue",
-                comment: "A Button for Testing MDProject functionality"
+                comment: "Enqueue Project"
             )
         }
         .disabled(

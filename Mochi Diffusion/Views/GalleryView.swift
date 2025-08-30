@@ -42,7 +42,7 @@ struct GalleryView: View {
                     comment: "Window title bar label displaying the searched text"
                 )
         )
-        .navigationSubtitle("\(store.images.count) image(s)")
+        .navigationSubtitle("\(store.images.count) image(s)\(maybeEnqueuedSuffix)")
         .onChange(of: coordinator.scrollToId) { _, newValue in
             print("triggered a request to scroll to selected")
             if let id = newValue {
@@ -53,6 +53,13 @@ struct GalleryView: View {
                 coordinator.scrollToId = nil
             }
         }
+    }
+
+    var maybeEnqueuedSuffix: String {
+        if store.projectTaskQueue.isEmpty {
+            return ""
+        }
+        return " / \(store.projectTaskQueue.count) projs enqd"
     }
 
     @State private var scrollProxy: ScrollViewProxy?

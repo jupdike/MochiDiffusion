@@ -82,6 +82,18 @@ struct ImageCommands: Commands {
                 }
                 .keyboardShortcut("R", modifiers: .command)
                 .disabled(controller.modelName.isEmpty)
+                Button {
+                    Task {
+                        await ImageStore.shared.autoEnqueueProjects()
+                    }
+                } label: {
+                    Text(
+                        "Auto-enqueue Projects",
+                        comment: "Enqueue all visible images as projects"
+                    )
+                }
+                .keyboardShortcut("U", modifiers: .command)
+                .disabled(store.images.isEmpty)
             }
             Section {
                 Button {
