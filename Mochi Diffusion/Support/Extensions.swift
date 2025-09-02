@@ -161,6 +161,83 @@ extension CGImage {
 
         return scaledCroppedImage
     }
+
+    func playWithAlphaChannel() -> CGImage? {
+        // Basic validation
+        guard self.bitsPerComponent == 8,
+            self.bitsPerPixel == 24 || self.bitsPerPixel == 32,
+            self.colorSpace?.model == .rgb
+        else {
+            print("Error: Image must be RGB with 8 bits per component")
+            return nil
+        }
+        let width = self.width
+        let height = self.height
+        // Get input buffer
+        guard let inputDataProvider = self.dataProvider,
+            let inputData = inputDataProvider.data,
+            let inputBuffer = CFDataGetBytePtr(inputData)
+        else {
+            print("Error: Could not access input image data")
+            return nil
+        }
+        // Calculate bytes per row for input (handle both RGB and RGBA)
+        let inputBytesPerPixel = self.bitsPerPixel / 8
+        let inputBytesPerRow = self.bytesPerRow
+        // Create output buffer (always RGBA)
+        let outputBytesPerPixel = 4
+        let outputBytesPerRow = width * outputBytesPerPixel
+        let outputBufferSize = height * outputBytesPerRow
+        var outputBuffer = [UInt8](repeating: 0, count: outputBufferSize)
+        // Process pixels
+        for y in 0..<height {
+            for x in 0..<width {
+                // Calculate input pixel offset
+                let inputPixelOffset = y * inputBytesPerRow + x * inputBytesPerPixel
+                // Get R G B from input image, ignore alpha (assume it is 255)
+                let r = inputBuffer[inputPixelOffset]
+                let g = inputBuffer[inputPixelOffset + 1]
+                let b = inputBuffer[inputPixelOffset + 2]
+                //
+                let newAlpha: UInt8 = 255  // this works and is a no-op / identifty function
+                // this works and proves that our PSD write code can write out PSD files with varying alpha
+                // let newAlpha: UInt8 = UInt8((x * y) % 255)  // TODOx I will write a better version of this
+                //
+                // Calculate output pixel offset
+                let outputPixelOffset = y * outputBytesPerRow + x * outputBytesPerPixel
+                // r g b and newAlpha get put back into a buffer here
+                outputBuffer[outputPixelOffset] = r
+                outputBuffer[outputPixelOffset + 1] = g
+                outputBuffer[outputPixelOffset + 2] = b
+                outputBuffer[outputPixelOffset + 3] = newAlpha
+            }
+        }
+        // Turn buffer back into CGImage
+        guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
+            let dataProvider = CGDataProvider(data: Data(outputBuffer) as CFData)
+        else {
+            print("Error: Could not create color space or data provider")
+            return nil
+        }
+        let newImage = CGImage(
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bitsPerPixel: 32,
+            bytesPerRow: outputBytesPerRow,
+            space: colorSpace,
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.last.rawValue),
+            provider: dataProvider,
+            decode: nil,
+            shouldInterpolate: false,
+            intent: .defaultIntent
+        )
+        guard let finalImage = newImage else {
+            print("Error: Could not create output CGImage")
+            return nil
+        }
+        return finalImage
+    }
 }
 
 public struct TransferableImage {
