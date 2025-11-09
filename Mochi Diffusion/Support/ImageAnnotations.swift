@@ -404,7 +404,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         return ret
     }
 
-    static func find(
+    static func findOld(
         inImage cgImage: CGImage,
         options: AnnotationOptions
     ) -> ImageAnnotations {
@@ -728,7 +728,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
         //
         var comboOrFull = baseAsset
         var belowOrFull = baseAsset
-        if bigEnough {
+        if false {  // bigEnough {
             if bigOverlapRatio < 0.6 {
                 fShapes.append(
                     MyShape(points: bigBelowRect.toPathPoints(), classification: .openPath)
@@ -753,7 +753,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 belowOrFull = bigBelow
             }
         }
-        if bigEnough && overlapRatio < 0.7 {
+        if false {  // bigEnough && overlapRatio < 0.7 {
             fShapes.append(MyShape(points: belowRect.toPathPoints(), classification: .openPath))
             assets.append(
                 ProjectAsset(rectToBase: belowRect, parent: belowOrFull, model: .wideAbstract, "")
@@ -911,13 +911,14 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             rectToBase: headRect, parent: comboOrFull, model: .wideAbstract, "!"
         )
         assets.append(head1)
-        let head2 = ProjectAsset(
-            rectToBase: headRect, parent: comboOrFull, model: .narrowLiteral, "!"
-        )
-        assets.append(head2)
+        //let head2 = ProjectAsset(
+        //    rectToBase: headRect, parent: comboOrFull, model: .narrowLiteral, "!"
+        //)
+        // // head2: include an extra head/face with a different model/style, but face + smallFace come from head1
+        //assets.append(head2)
         fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
         let faceAsset = ProjectAsset(
-            rectToBase: finalRect, parent: head2, model: .narrowLiteral, "!"
+            rectToBase: finalRect, parent: head1, model: .tightLiteral, "!"
         )
         assets.append(faceAsset)
         // TODO could use it but disallow scaling? So asset is there but optional,
@@ -933,6 +934,274 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
                 )
             )
         }
+        return ImageAnnotations(
+            limbs: limbShapes,
+            shapes: shapes,
+            faceRect: faceRect,
+            centerShape: MyShape(
+                points: centerPts,
+                classification: .openPath
+            ),
+            center: center,
+            bounds: myBounds,
+            boundsShape: MyShape(
+                points: bpts,
+                classification: .openPath
+            ),
+            finalRect: finalRect,
+            finalShapes: fShapes,
+            assets: assets
+        )
+    }
+
+    // -------------------------------------------------------
+    // nested rectangles
+    static func find(
+        inImage cgImage: CGImage,
+        options: AnnotationOptions
+    ) -> ImageAnnotations {
+        let emptyShapes: [MyShape] = []  // empty shape list for error situation
+        let emptyAnn: ImageAnnotations = ImageAnnotations(
+            limbs: [],
+            shapes: emptyShapes,
+            faceRect: CGRect(),
+            centerShape: MyShape.emptyShape(),
+            center: CGPoint(x: 20, y: 20),
+            bounds: CGRect(),
+            boundsShape: MyShape.emptyShape(),
+            finalRect: CGRect(),
+            finalShapes: [MyShape.emptyShape()],
+            assets: []
+        )
+        //let bigBoneIndex = indexOfBiggestBones(cgImage: cgImage)
+        // TODO use this
+        // goes from wrist to elbow and ankle to knee
+        let limbs = estimateBiggestPose(cgImage: cgImage)
+        let fh: CGFloat = CGFloat(cgImage.height)
+        let limbShapes = limbs.map {
+            MyShape(
+                points: [
+                    CGPoint(x: $0.pointA.x, y: fh - 1 - $0.pointA.y),
+                    CGPoint(x: $0.pointB.x, y: fh - 1 - $0.pointB.y),
+                ],
+                classification: .openPath)
+        }
+        var neckPoint: CGPoint = CGPoint(x: -1337, y: -1337)
+        if limbShapes.count > 0 {
+            let shouldersBone = limbShapes[0]
+            if let shoulderBox = computeBonesBoundingBox(
+                // these labels may be backwards but it doesn't matter
+                [
+                    Bone(
+                        jointA: .leftShoulder,
+                        pointA: shouldersBone.points[0],
+                        jointB: .rightShoulder,
+                        pointB: shouldersBone.points[1]
+                    )
+                ]
+            ) {
+                neckPoint = shoulderBox.center
+            }
+        }
+        //
+        print("Got an image of size \(cgImage.width) x \(cgImage.height).")
+        let imageSize = CGSize(width: cgImage.width, height: cgImage.height)
+        let detectFacesRequest = VNDetectFaceRectanglesRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage)
+        do {
+            try handler.perform([detectFacesRequest])
+        } catch {
+            print("Error performing face request")
+            print(error)
+            return emptyAnn
+        }
+        guard let arr: [VNFaceObservation] = detectFacesRequest.results else {
+            print("Nil results for face request")
+            return emptyAnn
+        }
+        print("Got \(arr.count) face results.")
+        let qualityRequest = VNDetectFaceCaptureQualityRequest()
+        let landmarksRequest = VNDetectFaceLandmarksRequest()
+        landmarksRequest.inputFaceObservations = arr
+        qualityRequest.inputFaceObservations = arr
+        do {
+            try handler.perform([landmarksRequest, qualityRequest])
+        } catch {
+            print("Error performing face pair of requests")
+            print(error)
+            return emptyAnn
+        }
+        guard let landmarks: [VNFaceObservation] = landmarksRequest.results,
+            landmarks.count > 0
+        else {
+            print("Nil landmarks")
+            return emptyAnn
+        }
+        let faceIndex: Int = faceIndexNearest(neckPoint, size: imageSize, landmarks: landmarks)
+        guard let quality = qualityRequest.results,
+            let qScore = quality[faceIndex].faceCaptureQuality
+        else {
+            print("Nil quality")
+            return emptyAnn
+        }
+        print("Quality score: \(qScore)")
+        //
+        let rect = landmarks[faceIndex].boundingBox
+        print("Landmark bbox: \(rect.minX), \(rect.minY) to \(rect.maxX), \(rect.maxY)")
+        guard let face = landmarks[faceIndex].landmarks else {
+            print("Got a nil set of face landmarks")
+            return emptyAnn
+        }
+        let shapes = [
+            MyShape(region: face.faceContour, size: imageSize),
+            MyShape(region: face.leftEye, size: imageSize),
+            MyShape(region: face.rightEye, size: imageSize),
+            MyShape(region: face.noseCrest, size: imageSize),
+            MyShape(region: face.leftEyebrow, size: imageSize),
+            MyShape(region: face.rightEyebrow, size: imageSize),
+            MyShape(region: face.innerLips, size: imageSize),
+            MyShape(region: face.outerLips, size: imageSize),
+            MyShape(region: face.medianLine, size: imageSize),
+        ]
+
+        let center: CGPoint = tipOfNose(
+            noseCrest: face.noseCrest,
+            median: face.medianLine,
+            size: imageSize
+        )
+        let rectRad: CGFloat = findRadius(
+            face.faceContour,
+            size: imageSize,
+            center: center
+        )
+        let faceRect: CGRect = CGRect(
+            x: center.x - rectRad,
+            y: center.y - rectRad,
+            width: rectRad * 2,
+            height: rectRad * 2
+        )
+        let myBounds: CGRect = getBounds(
+            contour: face.faceContour,
+            brow1: face.leftEyebrow,
+            brow2: face.rightEyebrow,
+            size: imageSize
+        )
+        let centerPts: [CGPoint] = [
+            CGPoint(x: center.x, y: center.y),
+            CGPoint(x: center.x - rectRad, y: center.y),
+            CGPoint(x: center.x, y: center.y),
+            CGPoint(x: center.x, y: center.y - rectRad),
+            CGPoint(x: center.x, y: center.y),
+            CGPoint(x: center.x + rectRad, y: center.y),
+            CGPoint(x: center.x, y: center.y),
+            CGPoint(x: center.x, y: center.y + rectRad),
+            CGPoint(x: center.x, y: center.y),
+        ]
+        //  2 3
+        //  1 4
+        let uno = CGPoint(x: myBounds.minX, y: myBounds.maxY)
+        let dos = CGPoint(x: myBounds.minX, y: myBounds.minY)
+        let tre = CGPoint(x: myBounds.maxX, y: myBounds.minY)
+        let qua = CGPoint(x: myBounds.maxX, y: myBounds.maxY)
+        // square with an X across it
+        let bpts: [CGPoint] = [uno, dos, tre, qua, dos, tre, uno, qua]
+        // This is unintuitive but since faces are 3-D, move the center in opposite direction
+        // to capture ear on the back side.
+        // So first: get a vector from center of myBounds (chin and brows) to tip-of-nose (center)
+        let dx = myBounds.midX - center.x
+        let dy = myBounds.midY - center.y
+        // then move in opposite direction to capture ear sticking out of opposite side,
+        // instead of a bunch of negative space on the front side of the face, in the
+        // direction the nose is pointing
+        let cx2 = (0.45 * center.x + 0.55 * myBounds.midX) + dx
+        let cy2 = (0.45 * center.y + 0.55 * myBounds.midY) + dy
+        // favor the generally larger rectangle, if there is a size discrepancy
+        let r = 0.7 * rectRad + 0.3 * myBounds.avgDim * 0.5
+        let finalRect = CGRect(x: cx2 - r, y: cy2 - r, width: r * 2, height: r * 2)
+        // uses brow to nose instead, but if the head is tilted down, this will help capture
+        // more of top of head
+        let smallDim = myBounds.avgDim
+        let smallCenterX = (0.5 * center.x + 0.5 * myBounds.midX)
+        let smallCenterY = (0.5 * center.y + 0.5 * myBounds.midY)
+        let smallFaceRect = CGRect(
+            x: smallCenterX - 0.5 * smallDim,
+            y: smallCenterY - 0.5 * smallDim,
+            width: smallDim,
+            height: smallDim
+        ).horizKeepWithin(finalRect)
+        let noseToChin = abs(myBounds.minY - center.y)
+        let hRad = r + noseToChin
+        let headRect = CGRect(
+            x: cx2 - hRad,
+            // don't let head rect stick out from face rect
+            y: max(0, max(finalRect.maxY - hRad * 2, cy2 - hRad + dy - hRad * 0.4)),
+            width: hRad * 2,
+            height: hRad * 2
+        )
+        let baseRect = CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height)
+        // see rectangle from human observation rectangles, when more than one figure, but
+        // main figure is missing
+        //shapes.append(MyShape(points: bodyRectScaled.toPathPoints(), classification: .openPath))
+        // now gather up relevant rectangles
+        var fShapes: [MyShape] = []
+        //
+        let targetRect = headRect
+        //
+        let maxScale: CGFloat = baseRect.height / targetRect.height
+        let n = Int(floor(maxScale + 1.0))
+        let neighborRatio: CGFloat = CGFloat(pow(maxScale, 1.0 / CGFloat(n)))
+        print("***> MAXSCALE: \(maxScale), neighborRatio: \(neighborRatio)")
+        var assets: [ProjectAsset] = []
+        let baseAsset = ProjectAsset(image: cgImage, extra: "", model: .wideAbstract)
+        assets.append(baseAsset)
+        var lastAsset = baseAsset
+        var curRatio: CGFloat = maxScale
+        var w = CGFloat(cgImage.width)
+        var h = CGFloat(cgImage.height)
+        for i in 0...n {
+            let k: CGFloat = (maxScale - curRatio) / (maxScale - 1.0)
+            let ptX = targetRect.minX * k
+            let ptY = targetRect.minY * k
+            let wrecked = CGRect(
+                x: ptX, y: ptY,
+                width: w, height: h
+            )
+            fShapes.append(MyShape(points: wrecked.toPathPoints(), classification: .openPath))
+            let pa = ProjectAsset(
+                rectToBase: wrecked, parent: lastAsset,
+                model: i <= n - 2 ? .wideAbstract : .tightLiteral, "!"
+            )
+            assets.append(pa)
+            lastAsset = pa
+            curRatio /= neighborRatio
+            w /= neighborRatio
+            h /= neighborRatio
+        }
+        // YES, this is right: fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
+        // OLD and worked ...?
+        //        let head1 = ProjectAsset(
+        //            rectToBase: headRect, parent: baseAsset, model: .wideAbstract, "!"
+        //        )
+        //        assets.append(head1)
+        fShapes.append(MyShape(points: finalRect.toPathPoints(), classification: .openPath))
+        let faceAsset = ProjectAsset(
+            rectToBase: finalRect, parent: lastAsset, model: .tightLiteral, "!"
+        )
+        assets.append(faceAsset)
+        // end old but worked
+        // TODO could use it but disallow scaling? So asset is there but optional,
+        // and if removed larger face is not blurry
+        //        if options.shouldUseSmallestFace {
+        //            fShapes.append(MyShape(points: smallFaceRect.toPathPoints(), classification: .openPath))
+        //            assets.append(
+        //                ProjectAsset(
+        //                    rectToBase: smallFaceRect,
+        //                    parent: faceAsset,
+        //                    model: .tightLiteral,
+        //                    "!"
+        //                )
+        //            )
+        //        }
         return ImageAnnotations(
             limbs: limbShapes,
             shapes: shapes,
