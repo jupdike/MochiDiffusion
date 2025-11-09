@@ -73,7 +73,7 @@ struct ProjectView: View {
                         )
                     ForEach(anns.shapes) { shape in
                         AnnotationShape(myShape: shape)
-                            .stroke(.orange, lineWidth: lineWidth)
+                            .stroke(shape.color, lineWidth: lineWidth)
                             .frame(
                                 width: CGFloat(cgi.width),
                                 height: CGFloat(cgi.height),
@@ -81,14 +81,14 @@ struct ProjectView: View {
                             )
                     }
                     AnnotationShape(myShape: anns.boundsShape)
-                        .stroke(.red, lineWidth: lineWidth)
+                        .stroke(anns.boundsShape.color, lineWidth: lineWidth)
                         .frame(
                             width: CGFloat(cgi.width),
                             height: CGFloat(cgi.height),
                             alignment: .topLeading
                         )
                     AnnotationShape(myShape: anns.centerShape)
-                        .stroke(.yellow, lineWidth: lineWidth)
+                        .stroke(anns.centerShape.color, lineWidth: lineWidth)
                         .frame(
                             width: CGFloat(cgi.width),
                             height: CGFloat(cgi.height),
@@ -96,7 +96,7 @@ struct ProjectView: View {
                         )
                     ForEach(anns.limbs) { shape in
                         AnnotationShape(myShape: shape)
-                            .stroke(.green, lineWidth: lineWidth)
+                            .stroke(shape.color, lineWidth: lineWidth)
                             .frame(
                                 width: CGFloat(cgi.width),
                                 height: CGFloat(cgi.height),
@@ -105,7 +105,7 @@ struct ProjectView: View {
                     }
                     ForEach(anns.finalShapes) { shape in
                         AnnotationShape(myShape: shape)
-                            .stroke(.cyan, lineWidth: lineWidth * 2)
+                            .stroke(shape.color, lineWidth: lineWidth * 2)
                             .frame(
                                 width: CGFloat(cgi.width),
                                 height: CGFloat(cgi.height),

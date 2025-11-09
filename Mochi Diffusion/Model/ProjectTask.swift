@@ -54,7 +54,7 @@ class ProjectTask {
         let nw = Int(trueSize.width)
         let nh = Int(trueSize.height)
         let nameStr =
-            "\(asset == baseAsset ? "BG" : "FG") \(Int(trueSize.width)) x \(Int(trueSize.height))"
+            "\(asset.labelTag) \(Int(trueSize.width)) x \(Int(trueSize.height))"
         print("Layer named: \(nameStr)")
         let trueOffset = asset.getOffsetRelativeToBase(assets: assets)
         print("Offset relative to base: \(trueOffset.x), \(trueOffset.y)")
@@ -250,6 +250,7 @@ class ProjectTask {
     func cropScaleParent(_ asset: ProjectAsset) async -> ProjectAsset {
         let maybeCgi = await doCropScaleExport(asset: asset)
         return ProjectAsset(
+            asset.labelTag,
             image: maybeCgi,
             result: asset.result,
             rectToBase: nil,
@@ -306,6 +307,7 @@ class ProjectTask {
         await ImageController.shared.setModel(asset.model)
         let maybeCgi = await doGenerate(image: image, asset.extraPrompt)
         return ProjectAsset(
+            asset.labelTag,
             image: maybeCgi,
             result: asset.result,
             rectToBase: nil,

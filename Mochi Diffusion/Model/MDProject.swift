@@ -90,7 +90,6 @@ public class MDProjectController {
         prompt: String,
         negativePrompt: String
     ) {
-        // TODO allow user to opt-out in UI
         self.projectTask.shouldExportPSD = shouldExportPSD
         self.projectTask.strength = strength
         let p = prompt

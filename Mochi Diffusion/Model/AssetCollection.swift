@@ -31,10 +31,12 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
     var isBaseImage: Bool { parentId == nil }
     var model: ModelSemantic = .wideAbstract
     var extraPrompt: String
+    let labelTag: String
 
     public let stage: AssetStage
 
     init(
+        _ labelTag: String,
         image: CGImage? = nil,
         result: Register? = nil,
         rectToBase: CGRect? = nil,
@@ -51,6 +53,7 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
         self.parentId = parentId
         self.model = model
         self.extraPrompt = extra
+        self.labelTag = labelTag
         if stage == nil {
             if parentId == nil {
                 self.stage = .generatedNotUpscaled3
@@ -62,9 +65,12 @@ public struct ProjectAsset: Identifiable, Equatable, Hashable {
         }
     }
 
-    init(rectToBase: CGRect, parent: ProjectAsset, model: ModelSemantic, _ extraPrompt: String) {
+    init(
+        _ labelTag: String, rectToBase: CGRect, parent: ProjectAsset,
+        model: ModelSemantic, _ extraPrompt: String
+    ) {
         self.init(
-            image: nil, result: nil, rectToBase: rectToBase,
+            labelTag, image: nil, result: nil, rectToBase: rectToBase,
             parentId: parent.id, extra: extraPrompt, model: model
         )
     }
@@ -313,6 +319,7 @@ class AssetCollection {
         )
         print("\(asset.id) -- offset: \(reg.offsetX), \(reg.offsetY) -- nw x nh: \(nw) x \(nh)")
         return ProjectAsset(
+            asset.labelTag,
             image: nil,
             result: reg,
             parentId: asset.parentId,
