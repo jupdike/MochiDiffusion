@@ -80,11 +80,11 @@ class ProjectTask {
             outImg = cgiUpscaled
         }
         // TODOx try changing alpha channel here and see what the file looks like
-        guard let alphaModified = outImg.playWithAlphaChannel() else {
-            print("playWithAlphaChannel failed to return an RGBA image")
-            return
-        }
-        outImg = alphaModified
+        //        guard let alphaModified = outImg.playWithAlphaChannel() else {
+        //            print("playWithAlphaChannel failed to return an RGBA image")
+        //            return
+        //        }
+        //        outImg = alphaModified
         // OK, write out a layer to PSD file
         print("Verifying new size of \(outImg.width), \(outImg.height)")
         // everything in the new space, not the old baseImage coord space
