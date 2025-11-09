@@ -412,6 +412,33 @@ extension CGRect {
         self.horizKeepWithin(other).vertKeepWithin(other)
     }
 
+    func interpolatePyramidWithSmallRect(_ other: CGRect, n: Int) -> [CGRect] {
+        // TODO BUG: assumes baseRect has top-left at 0,0
+        let baseRect = self
+        let targetRect = other
+        let maxScale: CGFloat = baseRect.height / targetRect.height
+        let neighborRatio: CGFloat = CGFloat(pow(maxScale, 1.0 / CGFloat(n)))
+        //print("***> MAXSCALE: \(maxScale), neighborRatio: \(neighborRatio)")
+        var ret: [CGRect] = []
+        var curRatio: CGFloat = maxScale
+        var w = baseRect.width
+        var h = baseRect.height
+        for _ in 0...n {
+            let k: CGFloat = (maxScale - curRatio) / (maxScale - 1.0)
+            let ptX = targetRect.minX * k
+            let ptY = targetRect.minY * k
+            let wrecked = CGRect(
+                x: ptX, y: ptY,
+                width: w, height: h
+            )
+            ret.append(wrecked)
+            curRatio /= neighborRatio
+            w /= neighborRatio
+            h /= neighborRatio
+        }
+        return ret
+    }
+
 }
 
 extension Text {
