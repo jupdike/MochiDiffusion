@@ -996,6 +996,21 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             "HD", rectToBase: headRect, parent: lastPyramidAsset, model: .wideAbstract, "!"
         )
         assets.append(head1)
+
+        var theHead = head1
+        let oneExtraHeadFaceRect = headRect.interpolatePyramidWithSmallRect(finalRect, n: 2)
+        if oneExtraHeadFaceRect.count == 3 {
+            let one = oneExtraHeadFaceRect[1]
+            fShapes.append(
+                MyShape(points: one.toPathPoints(), classification: .openPath, color: .brown)
+            )
+            theHead = ProjectAsset(
+                "FC", rectToBase: one, parent: theHead, model: .tightLiteral, "!"
+            )
+            assets.append(theHead)
+        }
+        // ...
+
         //let head2 = ProjectAsset(
         //    rectToBase: headRect, parent: comboOrFull, model: .narrowLiteral, "!"
         //)
@@ -1005,7 +1020,7 @@ struct ImageAnnotations: Hashable, Equatable, Identifiable {
             MyShape(points: finalRect.toPathPoints(), classification: .openPath, color: .red)
         )
         let faceAsset = ProjectAsset(
-            "FC", rectToBase: finalRect, parent: head1, model: .tightLiteral, "!"
+            "FC", rectToBase: finalRect, parent: theHead, model: .tightLiteral, "!"
         )
         assets.append(faceAsset)
         // TODO could use it but disallow scaling? So asset is there but optional,

@@ -425,8 +425,8 @@ extension CGRect {
         var h = baseRect.height
         for _ in 0...n {
             let k: CGFloat = (maxScale - curRatio) / (maxScale - 1.0)
-            let ptX = targetRect.minX * k
-            let ptY = targetRect.minY * k
+            let ptX = targetRect.minX * k + baseRect.minX * (1.0 - k)
+            let ptY = targetRect.minY * k + baseRect.minY * (1.0 - k)
             let wrecked = CGRect(
                 x: ptX, y: ptY,
                 width: w, height: h
