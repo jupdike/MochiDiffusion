@@ -278,7 +278,8 @@ class ProjectTask {
         }
     }
 
-    func doGenerate(image: CGImage, _ extra: String) async -> CGImage? {
+    func doGenerate(image: CGImage, strength oneStrength: Double, _ extra: String) async -> CGImage?
+    {
         let controller = await ImageController.shared
         await controller.setStartingImage(image: image)
         await logMessage("(\(i)/\(n)) Img2img")
@@ -287,7 +288,7 @@ class ProjectTask {
         //print("newPrompt:\n\(newPrompt)\n---\n")
         await controller.generate1(
             folderPath, "\(uuid)",
-            overrideStrength: strength,
+            overrideStrength: oneStrength,
             overridePrompt: newPrompt,
             overrideNegativePrompt: negativePrompt
         )
@@ -305,7 +306,17 @@ class ProjectTask {
             return asset  // eek, nothing to do? could cause an infinite loop
         }
         await ImageController.shared.setModel(asset.model)
-        let maybeCgi = await doGenerate(image: image, asset.extraPrompt)
+        var s = strength
+        if assets.count > 0 {
+            let baseAsset = assets[0]
+            let baseScale = assetCollection.getTrueScale(asset: baseAsset)
+            let ts = assetCollection.getTrueScale(asset: asset)
+            let halfBase = baseScale / 2.0
+            let ratio = ((ts + halfBase) / (baseScale + halfBase))
+            s = strength * ratio
+            print("ts: \(ts) -- baseScale: \(baseScale) -- ratio: \(ratio) -- s: \(s)")
+        }
+        let maybeCgi = await doGenerate(image: image, strength: s, asset.extraPrompt)
         return ProjectAsset(
             asset.labelTag,
             image: maybeCgi,

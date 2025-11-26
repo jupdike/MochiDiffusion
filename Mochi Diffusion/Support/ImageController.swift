@@ -526,6 +526,10 @@ final class ImageController: ObservableObject {
             // filter out comments
             { !$0.hasSuffix("#") && $0.trimmingCharacters(in: CharacterSet.whitespaces) != "" }
         )
+        if rowPrompts.count == 0 {
+            print("Expected > 0 rows.txt prompts. Found 0.")
+            return
+        }
         // Shuffle, so we can run a batch and stop and get different results. Nice.
         rowPrompts.shuffle()
         //
