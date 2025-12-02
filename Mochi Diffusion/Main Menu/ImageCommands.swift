@@ -151,7 +151,7 @@ struct ImageCommands: Commands {
                     }
                 } label: {
                     Text(
-                        store.projectController == nil ? "Enter Project" : "Close Projwct",
+                        store.projectController == nil ? "Enter Project" : "Close Project",
                         comment: store.projectController == nil
                             ? "Create or Edit Project using selected image as main image"
                             : "Close project if open"
