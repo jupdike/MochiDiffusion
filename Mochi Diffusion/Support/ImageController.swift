@@ -520,7 +520,72 @@ final class ImageController: ObservableObject {
         }
     }
 
+    // rows.txt, templates.txt
     func enqueueNested() async {
+        let rowsFile = "\(self.imageDir)/../rows.txt"
+        let rowPrompts = rowsFile.contensOfFileAsLines().filter(
+            // filter out comments
+            { !$0.hasSuffix("#") && $0.trimmingCharacters(in: CharacterSet.whitespaces) != "" }
+        )
+        if rowPrompts.count == 0 {
+            print("Expected > 0 rows.txt prompts. Found 0.")
+            return
+        }
+        print("Found \(rowPrompts.count) row prompts")
+        //
+        let templatesFile = "\(self.imageDir)/../templates.txt"
+        let templates: [(String, String)] = templatesFile.contensOfFileAsLines().filter(
+            // filter out comments
+            { !$0.hasSuffix("#") && $0.trimmingCharacters(in: CharacterSet.whitespaces) != "" }
+        ).map { (line: String) in
+            print("line: \(line)")
+            let pair = line.components(separatedBy: "|||")
+            // image path, prompt template with {s} as the sub-prompt spot
+            return (pair[0], pair[1])
+        }
+        print("Found \(templates.count) template pairs")
+
+        let n = Int(numberOfImages)
+        let m = rowPrompts.count
+        for rowPrompt in rowPrompts {
+            var c = 1
+            for templatePair in templates {
+                let template = templatePair.1
+                let imagePath = templatePair.0
+                let fullPath = "\(self.imageDir)/../\(imagePath)"
+                guard let cgi: CGImage = fullPath.loadJpegOrPngImage() else {
+                    print("Failed to load \(fullPath)")
+                    return
+                }
+                setStartingImage(image: cgi)
+                print("-----")
+                print("ROW PROMPT: \(rowPrompt)")
+                print("IMAGE: \(imagePath)")
+                // n times per x-y
+                for i in 0..<n {
+                    print("\(c) / \(m): \(i+1) / \(n)")
+                    let customPrompt: String = template.replacing("{s}", with: rowPrompt)
+                    print("PROMPT: \(customPrompt)")
+                    // also pick random strength
+                    let strengthMin = max(0.00, self.strength - 0.15)
+                    let strengthMax = min(0.95, self.strength + 0.15)
+                    let rangeDouble: Range<Double> = Range(
+                        uncheckedBounds: (lower: strengthMin, upper: strengthMax)
+                    )
+                    let randomStrength = Double.random(in: rangeDouble)
+                    await generateCustomPrompt(
+                        customPrompt,
+                        overrideNegativePrompt: self.negativePrompt,
+                        overrideStrength: randomStrength
+                    )
+                }
+            }
+            c += 1
+        }
+    }
+
+    // rows.txt, columns/ ...
+    func oldEnqueueNested() async {
         let rowsFile = "\(self.imageDir)/../rows.txt"
         var rowPrompts = rowsFile.contensOfFileAsLines().filter(
             // filter out comments
