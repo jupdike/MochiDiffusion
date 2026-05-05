@@ -70,6 +70,18 @@ struct ImageCommands: Commands {
                 .keyboardShortcut("N", modifiers: .command)
                 .disabled(controller.modelName.isEmpty)
                 Button {
+                    //Task {
+                    ImageController.shared.copyAllPrompts()
+                    //}
+                } label: {
+                    Text(
+                        "Copy Positive Prompts",
+                        comment: "Button to copy all prompts from filtered images as text"
+                    )
+                }
+                .keyboardShortcut("/", modifiers: .command)
+                .disabled(controller.modelName.isEmpty)
+                Button {
                     Task {
                         //await ImageController.shared.generateSeeded()
                         await ImageController.shared.test2()

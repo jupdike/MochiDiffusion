@@ -645,6 +645,23 @@ final class ImageController: ObservableObject {
         }
     }
 
+    func copyAllPrompts() {
+        print("Found \(ImageStore.shared.images.count) prompts")
+        print("---")
+        var ret: [String] = []
+        for image in ImageStore.shared.images {
+            print(image.prompt)
+            ret.append(image.prompt)
+        }
+        print("---")
+        let combined: String = ret.joined(separator: "\n")
+        // copy 'combined' string to NSPasteboard
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(combined, forType: .string)
+        // end copy
+    }
+
     func generateCustomPrompt(
         _ overridePrompt: String,
         overrideNegativePrompt: String,
